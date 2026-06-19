@@ -1,0 +1,1303 @@
+<!doctype html>
+<html lang="id" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KlinikHub - SaaS Clinic Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#FF6B00",
+              primaryHover: "#E65A00",
+              darkBg: "#121212",
+              darkCard: "#1E1E1E",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        transition:
+          background-color 0.3s,
+          color 0.3s;
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .autocomplete-item:hover {
+        background-color: #f3f4f6;
+      }
+      .dark .autocomplete-item:hover {
+        background-color: #374151;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-50 text-gray-900 dark:bg-darkBg dark:text-gray-100 min-h-screen flex flex-col"
+  >
+    <!-- LOGIN VIEW -->
+    <div
+      id="login-view"
+      class="min-h-screen flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white dark:bg-darkCard p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 w-full max-w-md fade-in"
+      >
+        <div class="text-center mb-8">
+          <div
+            class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4"
+          >
+            K
+          </div>
+          <h1 class="text-2xl font-bold">
+            Klinik<span class="text-primary">Hub</span>
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Masuk ke sistem klinik Anda
+          </p>
+        </div>
+        <form id="login-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              id="login-email"
+              required
+              class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+              placeholder="admin@klinik.com"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              id="login-password"
+              required
+              class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+              placeholder="••••••••"
+            />
+          </div>
+          <button
+            type="submit"
+            id="login-btn"
+            class="w-full bg-primary hover:bg-primaryHover text-white font-semibold py-2.5 rounded-lg transition shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2"
+          >
+            <span id="login-btn-text">Masuk</span>
+          </button>
+          <p
+            id="login-error"
+            class="text-red-500 text-sm text-center hidden"
+          ></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboard-view" class="hidden flex-grow flex fade-in">
+      <aside
+        class="w-64 bg-white dark:bg-darkCard border-r border-gray-200 dark:border-gray-800 hidden md:flex flex-col"
+      >
+        <div
+          class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800"
+        >
+          <div
+            class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold mr-3"
+          >
+            K
+          </div>
+          <span class="font-bold text-xl tracking-tight"
+            >Klinik<span class="text-primary">Hub</span></span
+          >
+        </div>
+        <nav
+          class="flex-grow p-4 space-y-1 overflow-y-auto no-scrollbar"
+          id="sidebar-menu"
+        ></nav>
+        <div class="p-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onclick="handleLogout()"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              ></path>
+            </svg>
+            Keluar
+          </button>
+        </div>
+      </aside>
+
+      <div class="flex-grow flex flex-col min-w-0">
+        <header
+          class="h-16 bg-white dark:bg-darkCard border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40"
+        >
+          <div class="flex items-center gap-4">
+            <h2 id="page-title" class="text-lg font-semibold">Dashboard</h2>
+          </div>
+          <div class="flex items-center gap-4">
+            <span
+              id="user-role-badge"
+              class="px-3 py-1 text-xs font-semibold bg-orange-100 text-primary dark:bg-orange-900/30 dark:text-orange-400 rounded-full capitalize"
+              >Loading...</span
+            >
+            <button
+              id="theme-toggle"
+              class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+            >
+              <svg
+                id="sun-icon"
+                class="w-5 h-5 hidden dark:block text-yellow-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                ></path>
+              </svg>
+              <svg
+                id="moon-icon"
+                class="w-5 h-5 block dark:hidden text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <main
+          class="flex-grow p-4 sm:p-6 lg:p-8 overflow-y-auto"
+          id="main-content"
+        ></main>
+      </div>
+    </div>
+
+    <script>
+      const SUPABASE_URL = "https://weqjbnkihgjxzquwltro.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlcWpibmtpaGdqeHpxdXdsdHJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NjQyMTksImV4cCI6MjA5NjQ0MDIxOX0.EV3ot5R3qWriGiZglo1gSAm3muZdV_hw_n2_zpPXjPQ"; // <-- GANTI DENGAN KEY ASLI KAMU
+
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+      );
+
+      let currentUser = null;
+      let userRole = null;
+      let clinicSettings = null;
+      let currentView = "registration";
+
+      // DARK MODE
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      const htmlElement = document.documentElement;
+
+      if (
+        localStorage.theme === "dark" ||
+        (!("theme" in localStorage) &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        htmlElement.classList.add("dark");
+      } else {
+        htmlElement.classList.remove("dark");
+      }
+
+      themeToggleBtn.addEventListener("click", () => {
+        htmlElement.classList.toggle("dark");
+        localStorage.theme = htmlElement.classList.contains("dark")
+          ? "dark"
+          : "light";
+      });
+
+      // AUTH CHECK
+      async function checkAuth() {
+        const {
+          data: { session },
+        } = await supabaseClient.auth.getSession();
+        if (session) {
+          currentUser = session.user;
+          await loadUserData();
+          showDashboard();
+        } else {
+          showLogin();
+        }
+      }
+
+      async function loadUserData() {
+        try {
+          const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("*, clinics(name)")
+            .eq("id", currentUser.id)
+            .single();
+
+          if (profileError || !profile) {
+            alert("Akun tidak memiliki profil klinik.");
+            await handleLogout();
+            return;
+          }
+
+          const { data: settings } = await supabaseClient
+            .from("clinic_settings")
+            .select("*")
+            .eq("clinic_id", profile.clinic_id)
+            .single();
+
+          clinicSettings = settings || {
+            use_nurse_triage: true,
+            has_internal_pharmacy: true,
+          };
+          userRole = profile.role;
+          document.getElementById("user-role-badge").textContent =
+            `Role: ${userRole} | ${profile.clinics.name}`;
+        } catch (err) {
+          alert("Error: " + err.message);
+          await handleLogout();
+        }
+      }
+
+      function showLogin() {
+        document.getElementById("login-view").classList.remove("hidden");
+        document.getElementById("dashboard-view").classList.add("hidden");
+      }
+
+      function showDashboard() {
+        document.getElementById("login-view").classList.add("hidden");
+        document.getElementById("dashboard-view").classList.remove("hidden");
+        renderSidebar();
+        navigateTo("registration");
+      }
+
+      // SIDEBAR
+      function renderSidebar() {
+        const menu = document.getElementById("sidebar-menu");
+        let html = `
+          <button onclick="navigateTo('registration')" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium ${currentView === "registration" ? "bg-orange-50 text-primary dark:bg-orange-900/20 dark:text-orange-400" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"} rounded-lg transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Pendaftaran
+          </button>
+        `;
+
+        if (
+          clinicSettings.use_nurse_triage &&
+          (userRole === "nurse" || userRole === "admin" || userRole === "owner")
+        ) {
+          html += `
+            <button onclick="navigateTo('triage')" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium ${currentView === "triage" || currentView === "input-ttv" ? "bg-orange-50 text-primary dark:bg-orange-900/20 dark:text-orange-400" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"} rounded-lg transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+              Antrian TTV (Perawat)
+            </button>
+          `;
+        }
+
+        if (
+          userRole === "doctor" ||
+          userRole === "admin" ||
+          userRole === "owner"
+        ) {
+          html += `
+            <button onclick="navigateTo('doctor-queue')" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium ${currentView === "doctor-queue" || currentView === "input-soap" ? "bg-orange-50 text-primary dark:bg-orange-900/20 dark:text-orange-400" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"} rounded-lg transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+              Pemeriksaan Dokter (SOAP)
+            </button>
+          `;
+        }
+
+        if (
+          clinicSettings.has_internal_pharmacy &&
+          (userRole === "pharmacist" ||
+            userRole === "admin" ||
+            userRole === "owner")
+        ) {
+          html += `
+            <button onclick="navigateTo('pharmacy')" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium ${currentView === "pharmacy" || currentView === "process-prescription" ? "bg-orange-50 text-primary dark:bg-orange-900/20 dark:text-orange-400" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"} rounded-lg transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+              Farmasi & Resep
+            </button>
+          `;
+        }
+
+        menu.innerHTML = html;
+      }
+
+      function navigateTo(view, data = null) {
+        currentView = view;
+        renderSidebar();
+        const mainContent = document.getElementById("main-content");
+        const pageTitle = document.getElementById("page-title");
+
+        if (view === "registration") {
+          pageTitle.textContent = "Dashboard Pendaftaran";
+          mainContent.innerHTML = getRegistrationHTML();
+          attachRegistrationListeners();
+        } else if (view === "triage") {
+          pageTitle.textContent = "Antrian Pasien (Menunggu TTV)";
+          loadTriageQueue();
+        } else if (view === "input-ttv") {
+          pageTitle.textContent = "Input TTV Pasien";
+          mainContent.innerHTML = getInputTTVHTML(data);
+          attachTTVListeners(data.id);
+        } else if (view === "doctor-queue") {
+          pageTitle.textContent = "Antrian Pasien (Menunggu Dokter)";
+          loadDoctorQueue();
+        } else if (view === "input-soap") {
+          pageTitle.textContent = "Pemeriksaan & SOAP";
+          loadSOAPData(data.id);
+        } else if (view === "pharmacy") {
+          pageTitle.textContent = "Dashboard Farmasi";
+          loadPharmacyQueue();
+        } else if (view === "process-prescription") {
+          pageTitle.textContent = "Proses Resep";
+          loadPrescriptionDetail(data.id);
+        }
+      }
+
+      // HALAMAN 1: PENDAFTARAN
+      function getRegistrationHTML() {
+        return `
+          <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 max-w-4xl fade-in">
+            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+              Formulir Pendaftaran Pasien Baru
+            </h3>
+            <form id="registration-form" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1">Nama Pasien <span class="text-red-500">*</span></label>
+                  <input type="text" id="patient-name" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Masukkan nama lengkap">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Nomor NIK / BPJS</label>
+                  <input type="text" id="patient-nik" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="16 digit NIK">
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1">No. Handphone</label>
+                  <input type="tel" id="patient-phone" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="08xxxxxxxxxx">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Pilih Poli / Dokter <span class="text-red-500">*</span></label>
+                  <select id="target-poly" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition">
+                    <option value="">-- Pilih Poli --</option>
+                    <option value="Poli Umum">Poli Umum</option>
+                    <option value="Poli Gigi">Poli Gigi</option>
+                    <option value="Poli Anak">Poli Anak</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Keluhan Utama <span class="text-red-500">*</span></label>
+                <textarea id="patient-complaint" rows="3" required class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Contoh: Sakit gigi geraham kanan sejak 2 hari"></textarea>
+              </div>
+              <div class="pt-4 flex gap-3">
+                <button type="submit" id="submit-btn" class="bg-primary hover:bg-primaryHover text-white font-semibold py-2 px-6 rounded-lg transition shadow-lg shadow-orange-500/30 flex items-center gap-2">
+                  <span>Kirim ke Perawat</span>
+                </button>
+                <button type="button" onclick="document.getElementById('registration-form').reset()" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold py-2 px-6 rounded-lg transition">Reset</button>
+              </div>
+              <p id="form-message" class="text-sm hidden mt-2"></p>
+            </form>
+          </div>
+        `;
+      }
+
+      function attachRegistrationListeners() {
+        document
+          .getElementById("registration-form")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById("submit-btn");
+            const msg = document.getElementById("form-message");
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Menyimpan...`;
+
+            try {
+              const { data: profileData } = await supabaseClient
+                .from("profiles")
+                .select("clinic_id")
+                .eq("id", currentUser.id)
+                .single();
+
+              const { data: patientData, error: patientError } =
+                await supabaseClient
+                  .from("patients")
+                  .insert([
+                    {
+                      clinic_id: profileData.clinic_id,
+                      nik: document.getElementById("patient-nik").value || null,
+                      full_name: document.getElementById("patient-name").value,
+                      phone:
+                        document.getElementById("patient-phone").value || null,
+                      gender: "L",
+                    },
+                  ])
+                  .select()
+                  .single();
+
+              if (patientError) throw patientError;
+
+              const { error: regError } = await supabaseClient
+                .from("registrations")
+                .insert([
+                  {
+                    clinic_id: patientData.clinic_id,
+                    patient_id: patientData.id,
+                    registered_by: currentUser.id,
+                    status: clinicSettings.use_nurse_triage
+                      ? "waiting_triage"
+                      : "waiting_doctor",
+                    complaint:
+                      document.getElementById("patient-complaint").value,
+                    target_poly: document.getElementById("target-poly").value,
+                    queue_number: "A-001",
+                  },
+                ]);
+
+              if (regError) throw regError;
+
+              msg.textContent = "✅ Pendaftaran berhasil!";
+              msg.className =
+                "text-sm text-green-600 dark:text-green-400 font-medium mt-2";
+              msg.classList.remove("hidden");
+              document.getElementById("registration-form").reset();
+            } catch (err) {
+              msg.textContent = "❌ Gagal: " + err.message;
+              msg.className =
+                "text-sm text-red-600 dark:text-red-400 font-medium mt-2";
+              msg.classList.remove("hidden");
+            } finally {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = `<span>Kirim ke Perawat</span>`;
+            }
+          });
+      }
+
+      // HALAMAN 2: ANTRIAN TTV
+      async function loadTriageQueue() {
+        const mainContent = document.getElementById("main-content");
+        try {
+          const { data: profileData } = await supabaseClient
+            .from("profiles")
+            .select("clinic_id")
+            .eq("id", currentUser.id)
+            .single();
+
+          const { data: registrations, error } = await supabaseClient
+            .from("registrations")
+            .select(
+              "id, queue_number, status, complaint, target_poly, created_at, patients(full_name)",
+            )
+            .eq("clinic_id", profileData.clinic_id)
+            .eq("status", "waiting_triage")
+            .order("created_at", { ascending: true });
+
+          if (error) throw error;
+
+          if (registrations.length === 0) {
+            mainContent.innerHTML = `<div class="bg-white dark:bg-darkCard p-10 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 text-center fade-in"><svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg><h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Tidak Ada Antrian</h3><p class="text-gray-500 dark:text-gray-400 mt-2">Belum ada pasien yang menunggu pemeriksaan TTV.</p></div>`;
+            return;
+          }
+
+          let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">`;
+          registrations.forEach((reg) => {
+            html += `
+              <div class="bg-white dark:bg-darkCard p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition cursor-pointer" onclick='navigateTo("input-ttv", ${JSON.stringify(reg)})'>
+                <div class="flex justify-between items-start mb-3">
+                  <span class="px-2 py-1 text-xs font-bold bg-orange-100 text-primary dark:bg-orange-900/30 dark:text-orange-400 rounded">${reg.queue_number}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(reg.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>
+                </div>
+                <h4 class="font-bold text-lg text-gray-900 dark:text-gray-100 mb-1">${reg.patients.full_name}</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">Keluhan: ${reg.complaint}</p>
+                <div class="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400">${reg.target_poly}</span>
+                  <button class="text-xs font-semibold text-primary hover:text-primaryHover">Input TTV &rarr;</button>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+          mainContent.innerHTML = html;
+        } catch (err) {
+          mainContent.innerHTML = `<div class="text-red-500 text-center">Gagal memuat antrian: ${err.message}</div>`;
+        }
+      }
+
+      function getInputTTVHTML(registration) {
+        return `
+          <div class="max-w-2xl mx-auto fade-in">
+            <button onclick="navigateTo('triage')" class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+              Kembali ke Antrian
+            </button>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 mb-4">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">${registration.patients.full_name}</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">No. Antrian: <span class="font-bold text-primary">${registration.queue_number}</span> | Poli: ${registration.target_poly}</p>
+                </div>
+                <span class="px-3 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-full">Menunggu TTV</span>
+              </div>
+              <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Keluhan Utama:</p>
+                <p class="text-gray-900 dark:text-gray-100">${registration.complaint}</p>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+              <h4 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Tanda-Tanda Vital (TTV)
+              </h4>
+              <form id="ttv-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Tensi (mmHg)</label>
+                    <div class="flex gap-2">
+                      <input type="number" id="systolic-bp" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="120">
+                      <span class="flex items-center text-gray-500">/</span>
+                      <input type="number" id="diastolic-bp" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="80">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Nadi (x/menit)</label>
+                    <input type="number" id="heart-rate" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="80">
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Suhu (°C)</label>
+                    <input type="number" step="0.1" id="temperature" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="36.5">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Berat Badan (kg)</label>
+                    <input type="number" step="0.1" id="weight" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="60">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Tinggi Badan (cm)</label>
+                    <input type="number" id="height" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="170">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Catatan Perawat</label>
+                  <textarea id="ttv-notes" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Catatan tambahan..."></textarea>
+                </div>
+                <div class="pt-4 flex gap-3">
+                  <button type="submit" id="ttv-submit-btn" class="bg-primary hover:bg-primaryHover text-white font-semibold py-2 px-6 rounded-lg transition shadow-lg shadow-orange-500/30 flex items-center gap-2">
+                    <span>Simpan & Kirim ke Dokter</span>
+                  </button>
+                </div>
+                <p id="ttv-message" class="text-sm hidden mt-2"></p>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      function attachTTVListeners(registrationId) {
+        document
+          .getElementById("ttv-form")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById("ttv-submit-btn");
+            const msg = document.getElementById("ttv-message");
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Menyimpan...`;
+
+            try {
+              const { error: ttvError } = await supabaseClient
+                .from("vital_signs")
+                .insert([
+                  {
+                    registration_id: registrationId,
+                    checked_by: currentUser.id,
+                    systolic_bp:
+                      document.getElementById("systolic-bp").value || null,
+                    diastolic_bp:
+                      document.getElementById("diastolic-bp").value || null,
+                    heart_rate:
+                      document.getElementById("heart-rate").value || null,
+                    temperature:
+                      document.getElementById("temperature").value || null,
+                    weight: document.getElementById("weight").value || null,
+                    height: document.getElementById("height").value || null,
+                    notes: document.getElementById("ttv-notes").value || null,
+                  },
+                ]);
+
+              if (ttvError) throw ttvError;
+
+              const { error: updateError } = await supabaseClient
+                .from("registrations")
+                .update({ status: "waiting_doctor" })
+                .eq("id", registrationId);
+
+              if (updateError) throw updateError;
+
+              msg.textContent =
+                "✅ TTV berhasil disimpan! Pasien dikirim ke Dokter.";
+              msg.className =
+                "text-sm text-green-600 dark:text-green-400 font-medium mt-2";
+              msg.classList.remove("hidden");
+
+              setTimeout(() => navigateTo("triage"), 2000);
+            } catch (err) {
+              msg.textContent = "❌ Gagal: " + err.message;
+              msg.className =
+                "text-sm text-red-600 dark:text-red-400 font-medium mt-2";
+              msg.classList.remove("hidden");
+            } finally {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = `<span>Simpan & Kirim ke Dokter</span>`;
+            }
+          });
+      }
+
+      // HALAMAN 3: ANTRIAN DOKTER
+      async function loadDoctorQueue() {
+        const mainContent = document.getElementById("main-content");
+        try {
+          const { data: profileData } = await supabaseClient
+            .from("profiles")
+            .select("clinic_id")
+            .eq("id", currentUser.id)
+            .single();
+
+          const { data: registrations, error } = await supabaseClient
+            .from("registrations")
+            .select(
+              "id, queue_number, status, complaint, target_poly, created_at, patients(full_name)",
+            )
+            .eq("clinic_id", profileData.clinic_id)
+            .eq("status", "waiting_doctor")
+            .order("created_at", { ascending: true });
+
+          if (error) throw error;
+
+          if (registrations.length === 0) {
+            mainContent.innerHTML = `<div class="bg-white dark:bg-darkCard p-10 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 text-center fade-in"><svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg><h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Tidak Ada Antrian</h3><p class="text-gray-500 dark:text-gray-400 mt-2">Belum ada pasien yang menunggu pemeriksaan Dokter.</p></div>`;
+            return;
+          }
+
+          let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">`;
+          registrations.forEach((reg) => {
+            html += `
+              <div class="bg-white dark:bg-darkCard p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition cursor-pointer" onclick='navigateTo("input-soap", ${JSON.stringify(reg)})'>
+                <div class="flex justify-between items-start mb-3">
+                  <span class="px-2 py-1 text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded">${reg.queue_number}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(reg.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>
+                </div>
+                <h4 class="font-bold text-lg text-gray-900 dark:text-gray-100 mb-1">${reg.patients.full_name}</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">Keluhan: ${reg.complaint}</p>
+                <div class="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400">${reg.target_poly}</span>
+                  <button class="text-xs font-semibold text-primary hover:text-primaryHover">Periksa (SOAP) &rarr;</button>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+          mainContent.innerHTML = html;
+        } catch (err) {
+          mainContent.innerHTML = `<div class="text-red-500 text-center">Gagal memuat antrian: ${err.message}</div>`;
+        }
+      }
+
+      // HALAMAN 4: INPUT SOAP + ICD-10 + RESEP
+      async function loadSOAPData(registrationId) {
+        const mainContent = document.getElementById("main-content");
+        try {
+          const { data: regData } = await supabaseClient
+            .from("registrations")
+            .select("*, patients(full_name, nik, phone)")
+            .eq("id", registrationId)
+            .single();
+
+          const { data: ttvData } = await supabaseClient
+            .from("vital_signs")
+            .select("*")
+            .eq("registration_id", registrationId)
+            .single();
+
+          mainContent.innerHTML = getInputSOAPHTML(regData, ttvData);
+          attachSOAPListeners(registrationId);
+          setupICD10Autocomplete();
+        } catch (err) {
+          mainContent.innerHTML = `<div class="text-red-500 text-center">Gagal memuat data: ${err.message}</div>`;
+        }
+      }
+
+      function getInputSOAPHTML(registration, ttv) {
+        const ttvHTML = ttv
+          ? `
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Tensi</p>
+              <p class="font-bold text-gray-900 dark:text-gray-100">${ttv.systolic_bp || "-"}/${ttv.diastolic_bp || "-"} <span class="text-xs font-normal">mmHg</span></p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Nadi</p>
+              <p class="font-bold text-gray-900 dark:text-gray-100">${ttv.heart_rate || "-"} <span class="text-xs font-normal">x/mnt</span></p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Suhu</p>
+              <p class="font-bold text-gray-900 dark:text-gray-100">${ttv.temperature || "-"} <span class="text-xs font-normal">°C</span></p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+              <p class="text-xs text-gray-500 dark:text-gray-400">BB</p>
+              <p class="font-bold text-gray-900 dark:text-gray-100">${ttv.weight || "-"} <span class="text-xs font-normal">kg</span></p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg">
+              <p class="text-xs text-gray-500 dark:text-gray-400">TB</p>
+              <p class="font-bold text-gray-900 dark:text-gray-100">${ttv.height || "-"} <span class="text-xs font-normal">cm</span></p>
+            </div>
+          </div>
+          ${ttv.notes ? `<div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg mb-4"><p class="text-xs font-medium text-yellow-800 dark:text-yellow-400">Catatan Perawat:</p><p class="text-sm text-gray-900 dark:text-gray-100">${ttv.notes}</p></div>` : ""}
+        `
+          : '<p class="text-sm text-gray-500 italic mb-4">Belum ada data TTV dari perawat.</p>';
+
+        return `
+          <div class="max-w-4xl mx-auto fade-in">
+            <button onclick="navigateTo('doctor-queue')" class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+              Kembali ke Antrian
+            </button>
+            
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 mb-4">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">${registration.patients.full_name}</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">No. Antrian: <span class="font-bold text-primary">${registration.queue_number}</span> | Poli: ${registration.target_poly}</p>
+                </div>
+                <span class="px-3 py-1 text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full">Menunggu Dokter</span>
+              </div>
+              <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg mb-4">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Keluhan Utama:</p>
+                <p class="text-gray-900 dark:text-gray-100">${registration.complaint}</p>
+              </div>
+              <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Data TTV (Tanda-Tanda Vital)</h4>
+              ${ttvHTML}
+            </div>
+
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 mb-4">
+              <h4 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Catatan Medis (SOAP)
+              </h4>
+              <form id="soap-form" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1">Subjective (Keluhan tambahan / Riwayat)</label>
+                  <textarea id="soap-s" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Keluhan tambahan dari pasien..."></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Objective (Hasil Pemeriksaan Fisik)</label>
+                  <textarea id="soap-o" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Hasil pemeriksaan fisik dokter..."></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Assessment (Diagnosa ICD-10)</label>
+                  <div class="relative">
+                    <input type="text" id="icd10-input" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Ketik kode ICD-10 (contoh: J00)">
+                    <div id="icd10-autocomplete" class="hidden absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+                  </div>
+                  <input type="hidden" id="icd10-code">
+                  <input type="text" id="soap-a" class="w-full px-4 py-2 mt-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Diagnosa akan muncul otomatis">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Plan (Tindakan)</label>
+                  <textarea id="soap-p" rows="2" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Contoh: Rawat jalan, kontrol 1 minggu"></textarea>
+                </div>
+              </form>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+              <h4 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                Resep Obat
+              </h4>
+              <div id="prescription-items" class="space-y-3 mb-4"></div>
+              <button type="button" onclick="addPrescriptionItem()" class="text-sm font-medium text-primary hover:text-primaryHover flex items-center gap-1 mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                Tambah Obat
+              </button>
+              <div class="pt-4 flex gap-3">
+                <button type="button" id="soap-submit-btn" onclick="submitSOAP()" class="bg-primary hover:bg-primaryHover text-white font-semibold py-2 px-6 rounded-lg transition shadow-lg shadow-orange-500/30 flex items-center gap-2">
+                  <span>Simpan & Kirim ke Farmasi</span>
+                </button>
+              </div>
+              <p id="soap-message" class="text-sm hidden mt-2"></p>
+            </div>
+          </div>
+        `;
+      }
+
+      let prescriptionItemCount = 0;
+
+      function addPrescriptionItem() {
+        prescriptionItemCount++;
+        const container = document.getElementById("prescription-items");
+        const itemHTML = `
+          <div id="prescription-item-${prescriptionItemCount}" class="grid grid-cols-12 gap-2 items-center">
+            <input type="text" class="col-span-5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Nama Obat">
+            <input type="text" class="col-span-3 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Dosis (3x1)">
+            <input type="number" class="col-span-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" placeholder="Qty">
+            <button type="button" onclick="removePrescriptionItem(${prescriptionItemCount})" class="col-span-2 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition">
+              <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+          </div>
+        `;
+        container.insertAdjacentHTML("beforeend", itemHTML);
+      }
+
+      function removePrescriptionItem(id) {
+        document.getElementById(`prescription-item-${id}`).remove();
+      }
+
+      async function setupICD10Autocomplete() {
+        const input = document.getElementById("icd10-input");
+        const autocomplete = document.getElementById("icd10-autocomplete");
+        const codeInput = document.getElementById("icd10-code");
+        const assessmentInput = document.getElementById("soap-a");
+
+        let debounceTimer;
+
+        input.addEventListener("input", (e) => {
+          clearTimeout(debounceTimer);
+          const query = e.target.value.trim();
+
+          if (query.length < 2) {
+            autocomplete.classList.add("hidden");
+            return;
+          }
+
+          debounceTimer = setTimeout(async () => {
+            const { data, error } = await supabaseClient
+              .from("icd10_codes")
+              .select("*")
+              .or(`code.ilike.%${query}%,description.ilike.%${query}%`)
+              .limit(10);
+
+            if (error || data.length === 0) {
+              autocomplete.classList.add("hidden");
+              return;
+            }
+
+            autocomplete.innerHTML = data
+              .map(
+                (item) => `
+              <div class="autocomplete-item px-4 py-2 cursor-pointer text-sm text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700 last:border-b-0" onclick="selectICD10('${item.code}', '${item.description.replace(/'/g, "\\'")}')">
+                <span class="font-bold text-primary">${item.code}</span> - ${item.description}
+              </div>
+            `,
+              )
+              .join("");
+            autocomplete.classList.remove("hidden");
+          }, 300);
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!input.contains(e.target) && !autocomplete.contains(e.target)) {
+            autocomplete.classList.add("hidden");
+          }
+        });
+      }
+
+      function selectICD10(code, description) {
+        document.getElementById("icd10-input").value =
+          `${code} - ${description}`;
+        document.getElementById("icd10-code").value = code;
+        document.getElementById("soap-a").value = description;
+        document.getElementById("icd10-autocomplete").classList.add("hidden");
+      }
+
+      async function submitSOAP() {
+        const submitBtn = document.getElementById("soap-submit-btn");
+        const msg = document.getElementById("soap-message");
+        const registrationId = currentRegistrationId;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Menyimpan...`;
+
+        try {
+          // 1. Simpan SOAP
+          const { error: soapError } = await supabaseClient
+            .from("medical_records")
+            .insert([
+              {
+                registration_id: registrationId,
+                doctor_id: currentUser.id,
+                soap_subject: document.getElementById("soap-s").value || null,
+                soap_objective: document.getElementById("soap-o").value || null,
+                soap_assessment:
+                  document.getElementById("soap-a").value || null,
+                soap_plan: document.getElementById("soap-p").value || null,
+              },
+            ]);
+
+          if (soapError) throw soapError;
+
+          // 2. Simpan Resep (jika ada)
+          const prescriptionItems = [];
+          const items = document.querySelectorAll('[id^="prescription-item-"]');
+          items.forEach((item) => {
+            const inputs = item.querySelectorAll("input");
+            if (inputs[0].value.trim()) {
+              prescriptionItems.push({
+                drug_name: inputs[0].value,
+                dose: inputs[1].value,
+                qty: parseInt(inputs[2].value) || 0,
+              });
+            }
+          });
+
+          if (prescriptionItems.length > 0) {
+            const { error: prescriptionError } = await supabaseClient
+              .from("prescriptions")
+              .insert([
+                {
+                  registration_id: registrationId,
+                  prescribed_by: currentUser.id,
+                  items: prescriptionItems,
+                  status: "pending",
+                },
+              ]);
+
+            if (prescriptionError) throw prescriptionError;
+          }
+
+          // 3. Update Status Registrasi
+          const { error: updateError } = await supabaseClient
+            .from("registrations")
+            .update({
+              status:
+                prescriptionItems.length > 0 ? "waiting_pharmacy" : "completed",
+            })
+            .eq("id", registrationId);
+
+          if (updateError) throw updateError;
+
+          msg.textContent =
+            "✅ SOAP berhasil disimpan!" +
+            (prescriptionItems.length > 0
+              ? " Resep dikirim ke Farmasi."
+              : " Pasien selesai.");
+          msg.className =
+            "text-sm text-green-600 dark:text-green-400 font-medium mt-2";
+          msg.classList.remove("hidden");
+
+          setTimeout(() => navigateTo("doctor-queue"), 2000);
+        } catch (err) {
+          msg.textContent = "❌ Gagal: " + err.message;
+          msg.className =
+            "text-sm text-red-600 dark:text-red-400 font-medium mt-2";
+          msg.classList.remove("hidden");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<span>Simpan & Kirim ke Farmasi</span>`;
+        }
+      }
+
+      let currentRegistrationId = null;
+
+      async function loadSOAPData(registrationId) {
+        currentRegistrationId = registrationId;
+        const mainContent = document.getElementById("main-content");
+        try {
+          const { data: regData } = await supabaseClient
+            .from("registrations")
+            .select("*, patients(full_name, nik, phone)")
+            .eq("id", registrationId)
+            .single();
+
+          const { data: ttvData } = await supabaseClient
+            .from("vital_signs")
+            .select("*")
+            .eq("registration_id", registrationId)
+            .single();
+
+          mainContent.innerHTML = getInputSOAPHTML(regData, ttvData);
+          setupICD10Autocomplete();
+        } catch (err) {
+          mainContent.innerHTML = `<div class="text-red-500 text-center">Gagal memuat data: ${err.message}</div>`;
+        }
+      }
+
+      // HALAMAN 5: FARMASI
+      async function loadPharmacyQueue() {
+        const mainContent = document.getElementById("main-content");
+        try {
+          const { data: profileData } = await supabaseClient
+            .from("profiles")
+            .select("clinic_id")
+            .eq("id", currentUser.id)
+            .single();
+
+          const { data: registrations, error } = await supabaseClient
+            .from("registrations")
+            .select(
+              "id, queue_number, status, created_at, patients(full_name), prescriptions(id, items, status)",
+            )
+            .eq("clinic_id", profileData.clinic_id)
+            .eq("status", "waiting_pharmacy")
+            .order("created_at", { ascending: true });
+
+          if (error) throw error;
+
+          if (registrations.length === 0) {
+            mainContent.innerHTML = `<div class="bg-white dark:bg-darkCard p-10 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 text-center fade-in"><svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg><h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Tidak Ada Antrian Resep</h3><p class="text-gray-500 dark:text-gray-400 mt-2">Belum ada resep yang menunggu diproses.</p></div>`;
+            return;
+          }
+
+          let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">`;
+          registrations.forEach((reg) => {
+            const prescription = reg.prescriptions[0];
+            const itemCount = prescription ? prescription.items.length : 0;
+            html += `
+              <div class="bg-white dark:bg-darkCard p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition cursor-pointer" onclick='navigateTo("process-prescription", ${JSON.stringify(reg)})'>
+                <div class="flex justify-between items-start mb-3">
+                  <span class="px-2 py-1 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded">${reg.queue_number}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(reg.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>
+                </div>
+                <h4 class="font-bold text-lg text-gray-900 dark:text-gray-100 mb-1">${reg.patients.full_name}</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${itemCount} item obat</p>
+                <div class="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Resep Pending</span>
+                  <button class="text-xs font-semibold text-primary hover:text-primaryHover">Proses &rarr;</button>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+          mainContent.innerHTML = html;
+        } catch (err) {
+          mainContent.innerHTML = `<div class="text-red-500 text-center">Gagal memuat antrian: ${err.message}</div>`;
+        }
+      }
+
+      // HALAMAN 6: PROSES RESEP
+      async function loadPrescriptionDetail(registration) {
+        const mainContent = document.getElementById("main-content");
+        try {
+          const { data: prescription } = await supabaseClient
+            .from("prescriptions")
+            .select("*")
+            .eq("registration_id", registration.id)
+            .single();
+
+          mainContent.innerHTML = getPrescriptionDetailHTML(
+            registration,
+            prescription,
+          );
+          attachPrescriptionListeners(prescription.id);
+        } catch (err) {
+          mainContent.innerHTML = `<div class="text-red-500 text-center">Gagal memuat data: ${err.message}</div>`;
+        }
+      }
+
+      function getPrescriptionDetailHTML(registration, prescription) {
+        const itemsHTML = prescription.items
+          .map(
+            (item) => `
+          <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-gray-100">${item.drug_name}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">${item.dose}</p>
+            </div>
+            <span class="px-3 py-1 text-sm font-bold bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded">${item.qty}</span>
+          </div>
+        `,
+          )
+          .join("");
+
+        return `
+          <div class="max-w-2xl mx-auto fade-in">
+            <button onclick="navigateTo('pharmacy')" class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+              Kembali ke Antrian Farmasi
+            </button>
+            
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 mb-4">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">${registration.patients.full_name}</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">No. Antrian: <span class="font-bold text-primary">${registration.queue_number}</span></p>
+                </div>
+                <span class="px-3 py-1 text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 rounded-full">Resep Pending</span>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 mb-4">
+              <h4 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Daftar Obat
+              </h4>
+              <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                ${itemsHTML}
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+              <h4 class="text-lg font-semibold mb-4">Proses Resep</h4>
+              <div class="space-y-3">
+                <button onclick="updatePrescriptionStatus('preparing')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg transition">
+                  Sedang Disiapkan
+                </button>
+                <button onclick="updatePrescriptionStatus('ready')" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition">
+                  Siap Diambil
+                </button>
+                <button onclick="updatePrescriptionStatus('handed_over')" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg transition">
+                  Sudah Diserahkan
+                </button>
+              </div>
+              <p id="prescription-message" class="text-sm hidden mt-4"></p>
+            </div>
+          </div>
+        `;
+      }
+
+      function attachPrescriptionListeners(prescriptionId) {
+        window.currentPrescriptionId = prescriptionId;
+      }
+
+      async function updatePrescriptionStatus(status) {
+        const msg = document.getElementById("prescription-message");
+        try {
+          // Update status resep
+          const { error } = await supabaseClient
+            .from("prescriptions")
+            .update({ status: status })
+            .eq("id", window.currentPrescriptionId);
+
+          if (error) throw error;
+
+          // Jika sudah diserahkan, update status registrasi
+          if (status === "handed_over") {
+            const { data: prescription } = await supabaseClient
+              .from("prescriptions")
+              .select("registration_id")
+              .eq("id", window.currentPrescriptionId)
+              .single();
+
+            await supabaseClient
+              .from("registrations")
+              .update({ status: "completed" })
+              .eq("id", prescription.registration_id);
+          }
+
+          const statusText = {
+            preparing: "Sedang disiapkan",
+            ready: "Siap diambil",
+            handed_over: "Sudah diserahkan",
+          };
+
+          msg.textContent = `✅ Status diubah ke: ${statusText[status]}`;
+          msg.className =
+            "text-sm text-green-600 dark:text-green-400 font-medium mt-4";
+          msg.classList.remove("hidden");
+
+          if (status === "handed_over") {
+            setTimeout(() => navigateTo("pharmacy"), 2000);
+          }
+        } catch (err) {
+          msg.textContent = "❌ Gagal: " + err.message;
+          msg.className =
+            "text-sm text-red-600 dark:text-red-400 font-medium mt-4";
+          msg.classList.remove("hidden");
+        }
+      }
+
+      // LOGIN & LOGOUT
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("login-email").value;
+          const password = document.getElementById("login-password").value;
+          const btn = document.getElementById("login-btn");
+          const btnText = document.getElementById("login-btn-text");
+          const errorMsg = document.getElementById("login-error");
+
+          btn.disabled = true;
+          btnText.textContent = "Memproses...";
+          errorMsg.classList.add("hidden");
+
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (error) {
+            errorMsg.textContent = error.message;
+            errorMsg.classList.remove("hidden");
+            btn.disabled = false;
+            btnText.textContent = "Masuk";
+          } else {
+            await checkAuth();
+          }
+        });
+
+      async function handleLogout() {
+        try {
+          await supabaseClient.auth.signOut({ scope: "local" });
+        } catch (err) {
+          console.warn("Logout API gagal, sesi lokal dibersihkan.", err);
+        }
+      }
+
+      checkAuth();
+
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_OUT") {
+          currentUser = null;
+          userRole = null;
+          clinicSettings = null;
+          showLogin();
+        } else if (event === "SIGNED_IN" && session) {
+          currentUser = session.user;
+          loadUserData().then(() => showDashboard());
+        }
+      });
+    </script>
+  </body>
+</html>
