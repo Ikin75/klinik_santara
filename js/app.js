@@ -156,6 +156,27 @@ async function loadUserData() {
     window.currentUser = currentUser;
     document.getElementById("user-role-badge").textContent =
       `Role: ${userRole} | ${profile.clinics.name}`;
+    // ============================================
+    // 🎨 LOAD THEME DARI CLINIC
+    // ============================================
+    try {
+      const { applyClinicTheme } = await import("./theme.js");
+
+      // Ambil data klinik lengkap
+      const { data: clinicData } = await supabaseClient
+        .from("clinics")
+        .select("*")
+        .eq("id", profile.clinic_id)
+        .single();
+
+      if (clinicData) {
+        applyClinicTheme(clinicData);
+        console.log("✅ Theme loaded:", clinicData.name);
+      }
+    } catch (themeError) {
+      console.warn("⚠️ Gagal load theme:", themeError.message);
+    }
+    // ============================================
   } catch (err) {
     alert("Error: " + err.message);
     await handleLogout();
