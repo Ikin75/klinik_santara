@@ -126,11 +126,24 @@ async function checkAuth() {
 
 async function loadUserData() {
   try {
+    // Ambil profile dulu
     const { data: profile, error } = await supabaseClient
       .from("profiles")
-      .select("*, clinics(name)")
+      .select("*")
       .eq("id", currentUser.id)
       .single();
+
+    // Kalau berhasil, ambil data klinik terpisah
+    if (profile && profile.clinic_id) {
+      const { data: clinic } = await supabaseClient
+        .from("clinics")
+        .select("name, logo_url, primary_color, secondary_color")
+        .eq("id", profile.clinic_id)
+        .single();
+
+      // Gabungkan
+      profile.clinics = clinic;
+    }
 
     if (error || !profile) {
       alert("Akun tidak memiliki profil klinik.");
