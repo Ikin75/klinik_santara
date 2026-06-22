@@ -22,6 +22,7 @@ import { loadPharmacyQueue, loadPrescriptionDetail } from "./farmasi.js";
 import { loadBillingQueue, loadBillingDetail } from "./kasir.js";
 import { loadStatisticsDashboard } from "./statistik.js";
 import { loadMasterCorporate } from "./master_corporate.js";
+import { initSuperAdmin } from "./super-admin.js";
 
 // 2. Variabel Global
 let currentUser = null;
@@ -80,6 +81,9 @@ window.navigateTo = function (view, data = null) {
   } else if (view === "master-corporate") {
     pageTitle.textContent = "Master Corporate";
     loadMasterCorporate(currentUser);
+  } else if (view === "super-admin") {
+    pageTitle.textContent = "🏢 Manajemen Klinik";
+    initSuperAdmin();
   }
 };
 
