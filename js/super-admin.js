@@ -10,7 +10,6 @@ export function renderSuperAdminPage() {
 
   mainContent.innerHTML = `
     <div class="max-w-6xl mx-auto fade-in">
-      <!-- Header -->
       <div class="bg-white dark:bg-darkCard p-6 rounded-xl border border-gray-200 dark:border-gray-800 mb-6">
         <div class="flex justify-between items-center">
           <div>
@@ -29,7 +28,6 @@ export function renderSuperAdminPage() {
         </div>
       </div>
 
-      <!-- Daftar Klinik -->
       <div id="clinics-list" class="space-y-4">
         <div class="text-center py-10">
           <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-3"></div>
@@ -38,16 +36,13 @@ export function renderSuperAdminPage() {
       </div>
     </div>
 
-    <!-- Modal Form Tambah Klinik -->
+    <!-- Modal Form -->
     <div id="clinic-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div class="bg-white dark:bg-gray-800 w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl overflow-y-auto">
         <div class="p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <div class="flex justify-between items-center">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100" id="modal-title">
-              🏢 Tambah Klinik Baru
-            </h3>
-            <button onclick="window.closeClinicModal()" 
-                    class="text-gray-400 hover:text-red-500 transition p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+            <h3 class="text-xl font-bold" id="modal-title">🏢 Tambah Klinik Baru</h3>
+            <button onclick="window.closeClinicModal()" class="text-gray-400 hover:text-red-500 transition p-1 rounded-lg">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -58,86 +53,67 @@ export function renderSuperAdminPage() {
         <form id="clinic-form" class="p-6 space-y-6">
           <!-- Info Dasar -->
           <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
-            <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-              </svg>
-              Informasi Klinik
-            </h4>
-            
+            <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-4">Informasi Klinik</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="md:col-span-2">
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nama Klinik *</label>
+                <label class="block text-sm font-medium mb-1">Nama Klinik *</label>
                 <input type="text" id="clinic-name" required 
                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
                        placeholder="Contoh: Klinik Sehat Perusahaan">
               </div>
-              
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Tipe *</label>
-                <select id="clinic-type" required 
-                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary">
+                <label class="block text-sm font-medium mb-1">Tipe *</label>
+                <select id="clinic-type" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none">
                   <option value="">-- Pilih Tipe --</option>
                   <option value="clinic">Klinik Umum</option>
                   <option value="dental">Praktek Dokter Gigi</option>
-                  <option value="hospital">Rumah Sakit</option>
                   <option value="independent">Praktek Mandiri</option>
                 </select>
               </div>
-              
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">No. Telepon</label>
-                <input type="text" id="clinic-phone" 
-                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
-                       placeholder="021-xxxxxx">
+                <label class="block text-sm font-medium mb-1">No. Telepon</label>
+                <input type="text" id="clinic-phone" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none" placeholder="021-xxxxxx">
               </div>
             </div>
-            
             <div class="mt-3">
-              <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Alamat Lengkap</label>
-              <textarea id="clinic-address" rows="2" 
-                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="Jl. Contoh No. 123, Jakarta"></textarea>
+              <label class="block text-sm font-medium mb-1">Alamat</label>
+              <textarea id="clinic-address" rows="2" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none" placeholder="Jl. Contoh No. 123"></textarea>
             </div>
           </div>
 
-          <!-- Kustomisasi Tampilan -->
+          <!-- Kustomisasi -->
           <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
-            <h4 class="font-semibold text-purple-800 dark:text-purple-300 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-              </svg>
-              Kustomisasi Tampilan
-            </h4>
-            
+            <h4 class="font-semibold text-purple-800 dark:text-purple-300 mb-4">Kustomisasi Tampilan</h4>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- UPLOAD LOGO -->
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">URL Logo</label>
-                <input type="url" id="clinic-logo" 
-                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
-                       placeholder="https://example.com/logo.png">
-                <p class="text-xs text-gray-400 mt-1">Biarkan kosong untuk logo default</p>
+                <label class="block text-sm font-medium mb-1">Logo Klinik</label>
+                <div class="mb-3 flex items-center gap-4">
+                  <img id="logo-preview" src="" class="w-20 h-20 rounded-xl object-cover border-2 border-dashed border-gray-300" style="display:none;">
+                  <div id="logo-placeholder" class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-3xl text-gray-400 border-2 border-dashed border-gray-300">🏢</div>
+                </div>
+                <input type="file" id="clinic-logo-file" accept="image/png,image/jpeg,image/jpg"
+                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white file:cursor-pointer">
+                <div class="mt-3">
+                  <p class="text-xs text-gray-400 mb-1">Atau URL logo:</p>
+                  <input type="url" id="clinic-logo-url" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none text-sm" placeholder="https://...">
+                </div>
+                <p class="text-xs text-gray-400 mt-2">PNG/JPG, max 2MB</p>
               </div>
               
+              <!-- WARNA -->
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Warna Utama</label>
+                <label class="block text-sm font-medium mb-1">Warna Utama</label>
                 <div class="flex gap-2">
-                  <input type="color" id="clinic-primary-color" value="#2196F3" 
-                         class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer">
-                  <input type="text" id="clinic-primary-color-text" value="#2196F3"
-                         class="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none text-sm"
-                         placeholder="#2196F3">
+                  <input type="color" id="clinic-primary-color" value="#2196F3" class="w-12 h-10 rounded-lg border cursor-pointer">
+                  <input type="text" id="clinic-primary-color-text" value="#2196F3" class="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none text-sm">
                 </div>
               </div>
-              
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Warna Sekunder</label>
+                <label class="block text-sm font-medium mb-1">Warna Sekunder</label>
                 <div class="flex gap-2">
-                  <input type="color" id="clinic-secondary-color" value="#FF9800" 
-                         class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer">
-                  <input type="text" id="clinic-secondary-color-text" value="#FF9800"
-                         class="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none text-sm"
-                         placeholder="#FF9800">
+                  <input type="color" id="clinic-secondary-color" value="#FF9800" class="w-12 h-10 rounded-lg border cursor-pointer">
+                  <input type="text" id="clinic-secondary-color-text" value="#FF9800" class="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none text-sm">
                 </div>
               </div>
             </div>
@@ -145,39 +121,23 @@ export function renderSuperAdminPage() {
 
           <!-- Admin Account -->
           <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
-            <h4 class="font-semibold text-green-800 dark:text-green-300 mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-              Akun Admin Klinik
-            </h4>
-            
+            <h4 class="font-semibold text-green-800 dark:text-green-300 mb-4">Akun Admin Klinik</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nama Admin *</label>
-                <input type="text" id="admin-name" required 
-                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
-                       placeholder="Dr. Ahmad">
+                <label class="block text-sm font-medium mb-1">Nama Admin *</label>
+                <input type="text" id="admin-name" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none" placeholder="Dr. Ahmad">
               </div>
-              
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Email Admin *</label>
-                <input type="email" id="admin-email" required 
-                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
-                       placeholder="admin@klinik.com">
+                <label class="block text-sm font-medium mb-1">Email Admin *</label>
+                <input type="email" id="admin-email" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none" placeholder="admin@klinik.com">
               </div>
-              
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Password *</label>
-                <input type="password" id="admin-password" required 
-                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
-                       placeholder="Minimal 6 karakter">
+                <label class="block text-sm font-medium mb-1">Password *</label>
+                <input type="password" id="admin-password" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none" placeholder="Min 6 karakter">
               </div>
-              
               <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Role</label>
-                <select id="admin-role" 
-                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary">
+                <label class="block text-sm font-medium mb-1">Role</label>
+                <select id="admin-role" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none">
                   <option value="admin">Admin Klinik</option>
                   <option value="owner">Pemilik</option>
                 </select>
@@ -187,14 +147,8 @@ export function renderSuperAdminPage() {
 
           <!-- Tombol -->
           <div class="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button type="button" onclick="window.closeClinicModal()" 
-                    class="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-xl transition">
-              Batal
-            </button>
-            <button type="submit" id="btn-save-clinic"
-                    class="flex-1 px-6 py-3 bg-primary hover:bg-primaryHover text-white font-semibold rounded-xl transition shadow-lg">
-              💾 Simpan Klinik
-            </button>
+            <button type="button" onclick="window.closeClinicModal()" class="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-xl transition">Batal</button>
+            <button type="submit" id="btn-save-clinic" class="flex-1 px-6 py-3 bg-primary hover:bg-primaryHover text-white font-semibold rounded-xl transition shadow-lg">💾 Simpan Klinik</button>
           </div>
           <p id="clinic-msg" class="text-sm hidden mt-2"></p>
         </form>
@@ -202,11 +156,10 @@ export function renderSuperAdminPage() {
     </div>
   `;
 
-  // Setup listeners
+  // Setup
   setupClinicFormListeners();
   setupColorSyncListeners();
-
-  // Load daftar klinik
+  setupLogoUploadListener();
   loadClinicsList();
 }
 
@@ -215,7 +168,6 @@ export function renderSuperAdminPage() {
 // ============================================
 async function loadClinicsList() {
   const container = document.getElementById("clinics-list");
-
   try {
     const { data: clinics, error } = await supabaseClient
       .from("clinics")
@@ -225,12 +177,7 @@ async function loadClinicsList() {
     if (error) throw error;
 
     if (!clinics || clinics.length === 0) {
-      container.innerHTML = `
-        <div class="bg-white dark:bg-darkCard p-10 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
-          <p class="text-5xl mb-4">🏢</p>
-          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Belum Ada Klinik</h3>
-          <p class="text-gray-500 mt-2">Klik tombol "Tambah Klinik Baru" untuk mendaftarkan client pertama Anda.</p>
-        </div>`;
+      container.innerHTML = `<div class="bg-white dark:bg-darkCard p-10 rounded-xl border border-gray-200 dark:border-gray-800 text-center"><p class="text-5xl mb-4">🏢</p><h3 class="text-lg font-semibold">Belum Ada Klinik</h3><p class="text-gray-500 mt-2">Klik tombol "Tambah Klinik Baru" untuk mendaftarkan client.</p></div>`;
       return;
     }
 
@@ -240,43 +187,23 @@ async function loadClinicsList() {
       <div class="bg-white dark:bg-darkCard p-6 rounded-xl border border-gray-200 dark:border-gray-800 hover:shadow-lg transition">
         <div class="flex justify-between items-start">
           <div class="flex items-start gap-4">
-            <img src="${clinic.logo_url || "default-logo.png"}" 
-                 class="w-16 h-16 rounded-xl object-cover border border-gray-200"
-                 onerror="this.src='default-logo.png'">
+            ${
+              clinic.logo_url
+                ? `<img src="${clinic.logo_url}" class="w-16 h-16 rounded-xl object-cover border border-gray-200" onerror="this.style.display='none'">`
+                : `<div class="w-16 h-16 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-2xl">🏢</div>`
+            }
             <div>
-              <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">${clinic.name}</h3>
-              <p class="text-sm text-gray-500">${
-                clinic.type === "dental"
-                  ? "🦷 Praktek Dokter Gigi"
-                  : clinic.type === "hospital"
-                    ? "🏥 Rumah Sakit"
-                    : clinic.type === "independent"
-                      ? "👨‍⚕️ Praktek Mandiri"
-                      : "🏢 Klinik Umum"
-              }</p>
-              <p class="text-xs text-gray-400 mt-1">📍 ${clinic.address || "Alamat belum diisi"}</p>
-              
+              <h3 class="font-bold text-lg">${clinic.name}</h3>
+              <p class="text-sm text-gray-500">${clinic.type === "dental" ? "🦷 Dokter Gigi" : clinic.type === "independent" ? "👨‍⚕️ Praktek Mandiri" : "🏢 Klinik Umum"}</p>
+              <p class="text-xs text-gray-400 mt-1">📍 ${clinic.address || "-"}</p>
               <div class="flex gap-2 mt-3">
-                <span class="px-2 py-1 text-xs rounded-full font-medium" 
-                      style="background:${clinic.primary_color}20; color:${clinic.primary_color}">
-                  🎨 Warna Utama
-                </span>
-                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium">
-                  ✅ Aktif
-                </span>
+                <span class="px-2 py-1 text-xs rounded-full font-medium" style="background:${clinic.primary_color}20; color:${clinic.primary_color}">🎨 Warna</span>
+                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-medium">✅ Aktif</span>
               </div>
             </div>
           </div>
-          
           <div class="flex gap-2">
-            <button onclick="window.editClinic('${clinic.id}')" 
-                    class="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-medium">
-              ✏️ Edit
-            </button>
-            <button onclick="window.manageClinicUsers('${clinic.id}')" 
-                    class="px-3 py-1.5 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition font-medium">
-              👥 Users
-            </button>
+            <button onclick="window.editClinic('${clinic.id}')" class="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-medium">✏️ Edit</button>
           </div>
         </div>
       </div>
@@ -289,7 +216,70 @@ async function loadClinicsList() {
 }
 
 // ============================================
-// FORM LISTENERS
+// UPLOAD LOGO
+// ============================================
+async function uploadLogoToStorage(file) {
+  const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+  if (!allowedTypes.includes(file.type))
+    throw new Error("Format harus PNG atau JPG!");
+  if (file.size > 2 * 1024 * 1024) throw new Error("Ukuran maksimal 2MB!");
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `logo-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const filePath = `logos/${fileName}`;
+
+  const { error } = await supabaseClient.storage
+    .from("clinic-logos")
+    .upload(filePath, file, { cacheControl: "3600", upsert: true });
+  if (error) throw error;
+
+  const { data: urlData } = supabaseClient.storage
+    .from("clinic-logos")
+    .getPublicUrl(filePath);
+  return urlData.publicUrl;
+}
+
+// ============================================
+// PREVIEW LOGO
+// ============================================
+window.previewLogo = function (input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    document.getElementById("logo-preview").src = e.target.result;
+    document.getElementById("logo-preview").style.display = "block";
+    document.getElementById("logo-placeholder").style.display = "none";
+  };
+  reader.readAsDataURL(file);
+};
+
+function setupLogoUploadListener() {
+  const fileInput = document.getElementById("clinic-logo-file");
+  if (fileInput)
+    fileInput.addEventListener("change", () => window.previewLogo(fileInput));
+}
+
+// ============================================
+// COLOR SYNC
+// ============================================
+function setupColorSyncListeners() {
+  const cp = document.getElementById("clinic-primary-color");
+  const ct = document.getElementById("clinic-primary-color-text");
+  const cp2 = document.getElementById("clinic-secondary-color");
+  const ct2 = document.getElementById("clinic-secondary-color-text");
+  if (cp && ct) {
+    cp.addEventListener("input", () => (ct.value = cp.value));
+    ct.addEventListener("input", () => (cp.value = ct.value));
+  }
+  if (cp2 && ct2) {
+    cp2.addEventListener("input", () => (ct2.value = cp2.value));
+    ct2.addEventListener("input", () => (cp2.value = ct2.value));
+  }
+}
+
+// ============================================
+// FORM SUBMIT
 // ============================================
 function setupClinicFormListeners() {
   const form = document.getElementById("clinic-form");
@@ -297,23 +287,32 @@ function setupClinicFormListeners() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const btn = document.getElementById("btn-save-clinic");
     const msg = document.getElementById("clinic-msg");
-
     btn.disabled = true;
     btn.innerHTML = "⏳ Menyimpan...";
 
     try {
-      // 1. Buat clinic dulu
+      // Upload logo dulu kalau ada file
+      let logoUrl = null;
+      const fileInput = document.getElementById("clinic-logo-file");
+      const urlInput = document.getElementById("clinic-logo-url");
+
+      if (fileInput && fileInput.files[0]) {
+        btn.innerHTML = "📤 Upload logo...";
+        logoUrl = await uploadLogoToStorage(fileInput.files[0]);
+      } else if (urlInput && urlInput.value.trim()) {
+        logoUrl = urlInput.value.trim();
+      }
+
+      // Simpan clinic
       const { data: clinic, error: clinicError } = await supabaseClient
         .from("clinics")
         .insert([
           {
             name: document.getElementById("clinic-name").value.trim(),
             type: document.getElementById("clinic-type").value,
-            logo_url:
-              document.getElementById("clinic-logo").value.trim() || null,
+            logo_url: logoUrl,
             primary_color: document.getElementById("clinic-primary-color-text")
               .value,
             secondary_color: document.getElementById(
@@ -329,19 +328,14 @@ function setupClinicFormListeners() {
 
       if (clinicError) throw clinicError;
 
-      // 2. Buat user admin
-      const adminEmail = document.getElementById("admin-email").value.trim();
-      const adminPassword = document.getElementById("admin-password").value;
-
+      // Buat user admin
       const { data: authData, error: authError } =
         await supabaseClient.auth.signUp({
-          email: adminEmail,
-          password: adminPassword,
+          email: document.getElementById("admin-email").value.trim(),
+          password: document.getElementById("admin-password").value,
         });
-
       if (authError) throw authError;
 
-      // 3. Insert profile dengan clinic_id
       if (authData.user) {
         await supabaseClient.from("profiles").insert([
           {
@@ -353,14 +347,10 @@ function setupClinicFormListeners() {
         ]);
       }
 
-      msg.textContent = `✅ Klinik "${clinic.name}" berhasil didaftarkan! Admin: ${adminEmail}`;
+      msg.textContent = `✅ Klinik "${clinic.name}" berhasil! Admin: ${document.getElementById("admin-email").value}`;
       msg.className = "text-sm text-green-600 mt-2 p-3 bg-green-50 rounded-lg";
       msg.classList.remove("hidden");
-
-      // Reset form
       form.reset();
-
-      // Refresh list
       setTimeout(() => {
         loadClinicsList();
         window.closeClinicModal();
@@ -376,41 +366,14 @@ function setupClinicFormListeners() {
   });
 }
 
-function setupColorSyncListeners() {
-  const colorPicker = document.getElementById("clinic-primary-color");
-  const colorText = document.getElementById("clinic-primary-color-text");
-  const colorPicker2 = document.getElementById("clinic-secondary-color");
-  const colorText2 = document.getElementById("clinic-secondary-color-text");
-
-  if (colorPicker && colorText) {
-    colorPicker.addEventListener(
-      "input",
-      () => (colorText.value = colorPicker.value),
-    );
-    colorText.addEventListener(
-      "input",
-      () => (colorPicker.value = colorText.value),
-    );
-  }
-
-  if (colorPicker2 && colorText2) {
-    colorPicker2.addEventListener(
-      "input",
-      () => (colorText2.value = colorPicker2.value),
-    );
-    colorText2.addEventListener(
-      "input",
-      () => (colorPicker2.value = colorText2.value),
-    );
-  }
-}
-
 // ============================================
-// MODAL FUNCTIONS
+// MODAL
 // ============================================
 window.showAddClinicForm = function () {
   document.getElementById("modal-title").textContent = "🏢 Tambah Klinik Baru";
   document.getElementById("clinic-form").reset();
+  document.getElementById("logo-preview").style.display = "none";
+  document.getElementById("logo-placeholder").style.display = "flex";
   document.getElementById("clinic-modal").classList.remove("hidden");
 };
 

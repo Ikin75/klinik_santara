@@ -154,8 +154,10 @@ async function loadUserData() {
     window.userRole = userRole;
     window.clinicSettings = clinicSettings;
     window.currentUser = currentUser;
+    const clinicName =
+      profile.clinics?.name || profile.clinic_id || "Super Admin";
     document.getElementById("user-role-badge").textContent =
-      `Role: ${userRole} | ${profile.clinics.name}`;
+      `Role: ${userRole} | ${clinicName}`;
     // ============================================
     // 🎨 LOAD THEME DARI CLINIC
     // ============================================
@@ -225,5 +227,22 @@ window.handlePrintClick = async function () {
     alert("Sistem cetak belum siap atau file cetak.js belum dimuat.");
   }
 };
+
+// ============================================
+// LOGOUT HANDLER
+// ============================================
+document.getElementById("btn-logout").addEventListener("click", async () => {
+  const confirmLogout = confirm("Apakah Anda yakin ingin keluar?");
+  if (!confirmLogout) return;
+
+  try {
+    await handleLogout();
+  } catch (error) {
+    console.error("Logout error:", error);
+    // Force logout anyway
+    localStorage.clear();
+    window.location.reload();
+  }
+});
 
 checkAuth();
