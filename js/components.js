@@ -161,7 +161,14 @@ export function renderSidebar(
   }
 
   // Validasi role
-  const validRoles = ["admin", "owner", "doctor", "nurse", "pharmacist"];
+  const validRoles = [
+    "admin",
+    "owner",
+    "doctor",
+    "nurse",
+    "pharmacist",
+    "super_admin",
+  ];
   if (!validRoles.includes(userRole)) {
     console.warn(`⚠️ Role tidak valid: ${userRole}. Menggunakan role default.`);
     userRole = "doctor"; // Default role
