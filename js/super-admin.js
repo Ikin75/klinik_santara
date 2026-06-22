@@ -415,10 +415,18 @@ function setupClinicFormListeners() {
 window.showAddClinicForm = function () {
   document.getElementById("modal-title").textContent = "🏢 Tambah Klinik Baru";
   document.getElementById("clinic-form").reset();
-  document.getElementById("clinic-form").dataset.editId = ""; // Reset edit ID
+  document.getElementById("clinic-form").dataset.editId = "";
   document.getElementById("logo-preview").style.display = "none";
   document.getElementById("logo-placeholder").style.display = "flex";
-  document.querySelector(".bg-green-50").style.display = ""; // Tampilkan admin fields
+
+  // Tampilkan admin fields & KEMBALIKAN required
+  document.querySelector(".bg-green-50").style.display = "";
+  document.getElementById("admin-name").setAttribute("required", "required");
+  document.getElementById("admin-email").setAttribute("required", "required");
+  document
+    .getElementById("admin-password")
+    .setAttribute("required", "required");
+
   document.getElementById("clinic-modal").classList.remove("hidden");
 };
 
@@ -465,8 +473,14 @@ window.editClinic = async function (clinicId) {
     // Simpan clinic ID di form (untuk update)
     document.getElementById("clinic-form").dataset.editId = clinicId;
 
-    // Sembunyikan field admin (gak perlu edit user)
-    document.querySelector(".bg-green-50").style.display = "none";
+    // Sembunyikan field admin & HAPUS required
+    const adminSection = document.querySelector(".bg-green-50");
+    adminSection.style.display = "none";
+
+    // Hapus atribut required dari field admin
+    document.getElementById("admin-name").removeAttribute("required");
+    document.getElementById("admin-email").removeAttribute("required");
+    document.getElementById("admin-password").removeAttribute("required");
 
     // Tampilkan modal
     document.getElementById("clinic-modal").classList.remove("hidden");
