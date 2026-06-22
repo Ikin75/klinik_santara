@@ -305,11 +305,15 @@ function setupClinicFormListeners() {
         logoUrl = urlInput.value.trim();
       }
 
-      // Simpan clinic
-      const { data: clinic, error: clinicError } = await supabaseClient
-        .from("clinics")
-        .insert([
-          {
+      // Simpan clinic (INSERT atau UPDATE)
+      const editId = form.dataset.editId;
+      let clinic;
+
+      if (editId) {
+        // UPDATE
+        const { data: updated, error: updateError } = await supabaseClient
+          .from("clinics")
+          .update({
             name: document.getElementById("clinic-name").value.trim(),
             type: document.getElementById("clinic-type").value,
             logo_url: logoUrl,
@@ -321,36 +325,75 @@ function setupClinicFormListeners() {
             address:
               document.getElementById("clinic-address").value.trim() || null,
             phone: document.getElementById("clinic-phone").value.trim() || null,
-          },
-        ])
-        .select()
-        .single();
+          })
+          .eq("id", editId)
+          .select()
+          .single();
 
-      if (clinicError) throw clinicError;
+        if (updateError) throw updateError;
+        clinic = updated;
+      } else {
+        // INSERT
+        const { data: inserted, error: insertError } = await supabaseClient
+          .from("clinics")
+          .insert([
+            {
+              name: document.getElementById("clinic-name").value.trim(),
+              type: document.getElementById("clinic-type").value,
+              logo_url: logoUrl,
+              primary_color: document.getElementById(
+                "clinic-primary-color-text",
+              ).value,
+              secondary_color: document.getElementById(
+                "clinic-secondary-color-text",
+              ).value,
+              address:
+                document.getElementById("clinic-address").value.trim() || null,
+              phone:
+                document.getElementById("clinic-phone").value.trim() || null,
+            },
+          ])
+          .select()
+          .single();
 
-      // Buat user admin
-      const { data: authData, error: authError } =
-        await supabaseClient.auth.signUp({
-          email: document.getElementById("admin-email").value.trim(),
-          password: document.getElementById("admin-password").value,
-        });
-      if (authError) throw authError;
-
-      if (authData.user) {
-        await supabaseClient.from("profiles").insert([
-          {
-            id: authData.user.id,
-            clinic_id: clinic.id,
-            role: document.getElementById("admin-role").value,
-            full_name: document.getElementById("admin-name").value.trim(),
-          },
-        ]);
+        if (insertError) throw insertError;
+        clinic = inserted;
       }
 
-      msg.textContent = `✅ Klinik "${clinic.name}" berhasil! Admin: ${document.getElementById("admin-email").value}`;
+      // Buat user admin (HANYA untuk INSERT baru)
+      if (!editId) {
+        const { data: authData, error: authError } =
+          await supabaseClient.auth.signUp({
+            email: document.getElementById("admin-email").value.trim(),
+            password: document.getElementById("admin-password").value,
+          });
+        if (authError) throw authError;
+
+        if (authData.user) {
+          await supabaseClient.from("profiles").insert([
+            {
+              id: authData.user.id,
+              clinic_id: clinic.id,
+              role: document.getElementById("admin-role").value,
+              full_name: document.getElementById("admin-name").value.trim(),
+            },
+          ]);
+        }
+      }
+
+      // ✅ SUKSES
+      msg.textContent = editId
+        ? `✅ Klinik "${clinic.name}" berhasil diupdate!`
+        : `✅ Klinik "${clinic.name}" berhasil! Admin: ${document.getElementById("admin-email").value}`;
       msg.className = "text-sm text-green-600 mt-2 p-3 bg-green-50 rounded-lg";
       msg.classList.remove("hidden");
+
       form.reset();
+      form.dataset.editId = "";
+      document.getElementById("logo-preview").style.display = "none";
+      document.getElementById("logo-placeholder").style.display = "flex";
+      document.querySelector(".bg-green-50").style.display = "";
+
       setTimeout(() => {
         loadClinicsList();
         window.closeClinicModal();
@@ -372,9 +415,64 @@ function setupClinicFormListeners() {
 window.showAddClinicForm = function () {
   document.getElementById("modal-title").textContent = "🏢 Tambah Klinik Baru";
   document.getElementById("clinic-form").reset();
+  document.getElementById("clinic-form").dataset.editId = ""; // Reset edit ID
   document.getElementById("logo-preview").style.display = "none";
   document.getElementById("logo-placeholder").style.display = "flex";
+  document.querySelector(".bg-green-50").style.display = ""; // Tampilkan admin fields
   document.getElementById("clinic-modal").classList.remove("hidden");
+};
+
+// ============================================
+// EDIT CLINIC
+// ============================================
+window.editClinic = async function (clinicId) {
+  try {
+    // Ambil data klinik
+    const { data: clinic, error } = await supabaseClient
+      .from("clinics")
+      .select("*")
+      .eq("id", clinicId)
+      .single();
+
+    if (error) throw error;
+
+    // Isi form dengan data klinik
+    document.getElementById("modal-title").textContent = "✏️ Edit Klinik";
+    document.getElementById("clinic-name").value = clinic.name || "";
+    document.getElementById("clinic-type").value = clinic.type || "";
+    document.getElementById("clinic-phone").value = clinic.phone || "";
+    document.getElementById("clinic-address").value = clinic.address || "";
+    document.getElementById("clinic-primary-color").value =
+      clinic.primary_color || "#2196F3";
+    document.getElementById("clinic-primary-color-text").value =
+      clinic.primary_color || "#2196F3";
+    document.getElementById("clinic-secondary-color").value =
+      clinic.secondary_color || "#FF9800";
+    document.getElementById("clinic-secondary-color-text").value =
+      clinic.secondary_color || "#FF9800";
+    document.getElementById("clinic-logo-url").value = clinic.logo_url || "";
+
+    // Tampilkan logo jika ada
+    if (clinic.logo_url) {
+      document.getElementById("logo-preview").src = clinic.logo_url;
+      document.getElementById("logo-preview").style.display = "block";
+      document.getElementById("logo-placeholder").style.display = "none";
+    } else {
+      document.getElementById("logo-preview").style.display = "none";
+      document.getElementById("logo-placeholder").style.display = "flex";
+    }
+
+    // Simpan clinic ID di form (untuk update)
+    document.getElementById("clinic-form").dataset.editId = clinicId;
+
+    // Sembunyikan field admin (gak perlu edit user)
+    document.querySelector(".bg-green-50").style.display = "none";
+
+    // Tampilkan modal
+    document.getElementById("clinic-modal").classList.remove("hidden");
+  } catch (err) {
+    alert("❌ Gagal load data klinik: " + err.message);
+  }
 };
 
 window.closeClinicModal = function () {
