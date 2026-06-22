@@ -245,4 +245,11 @@ document.getElementById("btn-logout").addEventListener("click", async () => {
   }
 });
 
+// LOGOUT
+document.getElementById("btn-logout").addEventListener("click", async () => {
+  if (confirm("Yakin keluar?")) {
+    await handleLogout();
+  }
+});
+
 checkAuth();
