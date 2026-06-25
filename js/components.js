@@ -95,6 +95,14 @@ const MENU_CONFIG = {
       activeViews: ["master-corporate"],
       divider: true,
     },
+    {
+      view: "super-admin",
+      label: "🏢 Manajemen Klinik",
+      icon: "super-admin",
+      roles: ["super_admin"],
+      activeViews: ["super-admin"],
+      divider: true,
+    },
   ],
 };
 
@@ -226,10 +234,13 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
 
   // Section: Menu Berdasarkan Role
   const roleMenus = MENU_CONFIG.roleBased.filter((menu) => {
+    // ✅ Super admin bisa lihat SEMUA menu
+    if (userRole === "super_admin") return true;
+
     // Check role permission
     if (!menu.roles.includes(userRole)) return false;
 
-    // Check conditional permission (misal: use_nurse_triage)
+    // Check conditional permission
     if (menu.condition && !menu.condition(clinicSettings)) return false;
 
     return true;
