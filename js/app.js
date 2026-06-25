@@ -23,6 +23,7 @@ import { loadBillingQueue, loadBillingDetail } from "./kasir.js";
 import { loadStatisticsDashboard } from "./statistik.js";
 import { loadMasterCorporate } from "./master_corporate.js";
 import { initSuperAdmin } from "./super-admin.js";
+import { renderManageUsers } from "./manage-users.js";
 
 // 2. Variabel Global
 let currentUser = null;
@@ -33,6 +34,33 @@ let currentView = "registration";
 
 // 3. Fungsi Navigasi (Router)
 window.navigateTo = function (view, data = null) {
+  // ============================================
+  // 🛡️ VALIDASI AKSES ROLE
+  // ============================================
+  const accessMap = {
+    receptionist: ["registration"],
+    doctor: ["doctor-queue", "input-soap"],
+    nurse: ["triage", "input-ttv"],
+    pharmacist: ["pharmacy", "process-prescription", "medications"],
+    cashier: ["billing", "billing-detail"],
+    admin: "all",
+    owner: "all",
+    super_admin: "all",
+  };
+
+  const allowedViews = accessMap[userRole];
+
+  if (allowedViews !== "all" && !allowedViews.includes(view)) {
+    alert(
+      `⛔ Akses terbatas! Role ${userRole} tidak bisa mengakses halaman ini.`,
+    );
+    // Redirect ke halaman pertama yang diizinkan
+    if (allowedViews && allowedViews.length > 0) {
+      window.navigateTo(allowedViews[0]);
+    }
+    return;
+  }
+  // ============================================
   currentView = view;
   renderSidebar(currentView, userRole, clinicSettings);
 
@@ -84,6 +112,9 @@ window.navigateTo = function (view, data = null) {
   } else if (view === "super-admin") {
     pageTitle.textContent = "🏢 Manajemen Klinik";
     initSuperAdmin();
+  } else if (view === "manage-users") {
+    pageTitle.textContent = "👥 Manajemen User";
+    renderManageUsers();
   }
 };
 
@@ -126,24 +157,12 @@ async function checkAuth() {
 
 async function loadUserData() {
   try {
-    // Ambil profile dulu
+    // 1. Ambil profile dulu
     const { data: profile, error } = await supabaseClient
       .from("profiles")
       .select("*")
       .eq("id", currentUser.id)
       .single();
-
-    // Kalau berhasil, ambil data klinik terpisah
-    if (profile && profile.clinic_id) {
-      const { data: clinic } = await supabaseClient
-        .from("clinics")
-        .select("name, logo_url, primary_color, secondary_color")
-        .eq("id", profile.clinic_id)
-        .single();
-
-      // Gabungkan
-      profile.clinics = clinic;
-    }
 
     if (error || !profile) {
       alert("Akun tidak memiliki profil klinik.");
@@ -152,6 +171,21 @@ async function loadUserData() {
       return;
     }
 
+    // 2. Simpan clinic_id ke window (SESUDAH profile ada)
+    window.currentClinicId = profile.clinic_id;
+
+    // 3. Ambil data klinik
+    if (profile.clinic_id) {
+      const { data: clinic } = await supabaseClient
+        .from("clinics")
+        .select("name, logo_url, primary_color, secondary_color")
+        .eq("id", profile.clinic_id)
+        .single();
+
+      profile.clinics = clinic;
+    }
+
+    // 4. Ambil clinic settings
     const { data: settings } = await supabaseClient
       .from("clinic_settings")
       .select("*")
@@ -163,35 +197,27 @@ async function loadUserData() {
       has_internal_pharmacy: true,
     };
 
+    // 5. Set global variables
     userRole = profile.role;
     window.userRole = userRole;
     window.clinicSettings = clinicSettings;
     window.currentUser = currentUser;
-    const clinicName =
-      profile.clinics?.name || profile.clinic_id || "Super Admin";
+
+    const clinicName = profile.clinics?.name || "Klinik";
     document.getElementById("user-role-badge").textContent =
       `Role: ${userRole} | ${clinicName}`;
-    // ============================================
-    // 🎨 LOAD THEME DARI CLINIC
-    // ============================================
+
+    // 6. Load theme
     try {
       const { applyClinicTheme } = await import("./theme.js");
 
-      // Ambil data klinik lengkap
-      const { data: clinicData } = await supabaseClient
-        .from("clinics")
-        .select("*")
-        .eq("id", profile.clinic_id)
-        .single();
-
-      if (clinicData) {
-        applyClinicTheme(clinicData);
-        console.log("✅ Theme loaded:", clinicData.name);
+      if (profile.clinics) {
+        applyClinicTheme(profile.clinics);
+        console.log("✅ Theme loaded:", profile.clinics.name);
       }
     } catch (themeError) {
       console.warn("⚠️ Gagal load theme:", themeError.message);
     }
-    // ============================================
   } catch (err) {
     alert("Error: " + err.message);
     await handleLogout();
@@ -211,8 +237,30 @@ function showDashboard() {
   // Render menu samping sesuai role
   renderSidebar(currentView, userRole, clinicSettings);
 
-  // Buka halaman pendaftaran sebagai halaman pertama
-  window.navigateTo("registration");
+  // ============================================
+  // 🎯 REDIRECT PERTAMA SESUAI ROLE
+  // ============================================
+  switch (userRole) {
+    case "receptionist":
+      window.navigateTo("registration");
+      break;
+    case "doctor":
+      window.navigateTo("doctor-queue");
+      break;
+    case "nurse":
+      window.navigateTo("triage");
+      break;
+    case "pharmacist":
+      window.navigateTo("pharmacy");
+      break;
+    case "cashier":
+      window.navigateTo("billing");
+      break;
+    default:
+      // admin, owner, super_admin → pendaftaran
+      window.navigateTo("registration");
+  }
+  // ============================================
 }
 
 window.handlePrintClick = async function () {

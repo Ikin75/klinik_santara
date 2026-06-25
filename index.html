@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KlinikHub - SaaS Clinic Management</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -164,6 +168,25 @@
         text-decoration: underline;
         margin: 20px 0;
       }
+      @keyframes bounceIn {
+        0% {
+          transform: scale(0.3);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        70% {
+          transform: scale(0.9);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .animate-bounce-in {
+        animation: bounceIn 0.5s ease-out;
+      }
     </style>
   </head>
   <body
@@ -178,8 +201,19 @@
         class="bg-white dark:bg-darkCard p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 w-full max-w-md fade-in"
       >
         <div class="text-center mb-8">
+          <img
+            class="clinic-logo w-12 h-12 rounded-xl object-cover mx-auto mb-4"
+            src=""
+            alt="Logo"
+            style="display: none"
+            onerror="
+              this.style.display = 'none';
+              this.nextElementSibling.style.display = 'flex';
+            "
+          />
           <div
-            class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4"
+            class="clinic-logo-fallback w-12 h-12 bg-primary rounded-xl items-center justify-center text-white font-bold text-2xl mx-auto mb-4"
+            style="display: flex"
           >
             K
           </div>
@@ -234,14 +268,23 @@
         <div
           class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800"
         >
+          <img
+            class="clinic-logo w-8 h-8 rounded-lg object-cover mr-3"
+            src=""
+            alt="Logo"
+            style="display: none"
+            onerror="
+              this.style.display = 'none';
+              this.nextElementSibling.style.display = 'flex';
+            "
+          />
           <div
-            class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold mr-3"
+            class="clinic-logo-fallback w-8 h-8 bg-primary rounded-lg items-center justify-center text-white font-bold mr-3"
+            style="display: flex"
           >
             K
           </div>
-          <span class="font-bold text-xl tracking-tight"
-            >Klinik<span class="text-primary">Hub</span></span
-          >
+          <span class="clinic-name font-bold tracking-tight">KlinikHub</span>
         </div>
         <nav
           class="flex-grow p-4 space-y-1 overflow-y-auto no-scrollbar"

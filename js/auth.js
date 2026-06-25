@@ -1,25 +1,44 @@
 // js/auth.js
-// 1. IMPORT koneksi database dari laci config
+
 import { supabaseClient } from "./config.js";
 
-// 2. Fungsi Login
 export async function handleLogin(email, password) {
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password,
-  });
-  return error;
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) return error;
+    return null; // Sukses
+  } catch (err) {
+    return err;
+  }
 }
 
-// 3. Fungsi Logout
 export async function handleLogout() {
-  await supabaseClient.auth.signOut({ scope: "local" });
+  try {
+    // Clear semua localStorage
+    localStorage.clear();
+
+    // Sign out dari Supabase (abaikan error)
+    await supabaseClient.auth.signOut().catch(() => {});
+
+    // Reload halaman
+    window.location.href = "/";
+  } catch (err) {
+    // Force reload
+    window.location.href = "/";
+  }
 }
 
-// 4. Cek siapa yang sedang login
 export async function checkSession() {
-  const {
-    data: { session },
-  } = await supabaseClient.auth.getSession();
-  return session;
+  try {
+    const {
+      data: { session },
+    } = await supabaseClient.auth.getSession();
+    return session;
+  } catch (err) {
+    return null;
+  }
 }

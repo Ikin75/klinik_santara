@@ -155,6 +155,17 @@ export function getRegistrationHTML() {
           <p id="new-message" class="text-sm hidden mt-2"></p>
         </form>
       </div>
+      <!-- NOTIFIKASI POPUP -->
+<div id="notif-popup" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center animate-bounce-in">
+    <div class="text-5xl mb-4">✅</div>
+    <h3 id="notif-title" class="text-xl font-bold text-green-600 mb-2">Berhasil!</h3>
+    <p id="notif-message" class="text-gray-600 dark:text-gray-300 mb-6"></p>
+    <button onclick="window.closeNotif()" class="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primaryHover transition">
+      OK
+    </button>
+  </div>
+</div>
     </div>
   `;
 }
@@ -195,6 +206,17 @@ async function generateQueueNumber(poly, currentUser) {
 // 3. Inisialisasi Logika Pendaftaran
 export function initRegistration(currentUser, clinicSettings) {
   let selectedPatientForVisit = null;
+
+  // Fungsi notifikasi popup
+  window.showNotif = function (title, message) {
+    document.getElementById("notif-title").textContent = title;
+    document.getElementById("notif-message").innerHTML = message;
+    document.getElementById("notif-popup").classList.remove("hidden");
+  };
+
+  window.closeNotif = function () {
+    document.getElementById("notif-popup").classList.add("hidden");
+  };
 
   // 🛠️ TAMBAHAN: Tarik opsi Master Corporate dari database secara realtime
   async function loadCorporateDropdownOptions() {
@@ -418,7 +440,6 @@ export function initRegistration(currentUser, clinicSettings) {
           .select("clinic_id")
           .eq("id", currentUser.id)
           .single();
-
         if (pErr || !profileData)
           throw new Error("Data profil tidak ditemukan");
 
@@ -442,18 +463,37 @@ export function initRegistration(currentUser, clinicSettings) {
 
         if (rErr) throw rErr;
 
-        // ============================================
-        // 🚀 KIRIM KUNJUNGAN KE SATUSEHAT
-        // ============================================
-        if (rErr) throw rErr;
+        // ✅ Deklarasi patientName
+        const patientName = selectedPatientForVisit?.name || "Pasien";
 
-        msg.textContent = `✅ Pasien baru "${newPatient.full_name}" berhasil! Antrean: ${queueNumber}`;
-        // ============================================
+        // ✅ Tampilkan popup
+        window.showNotif(
+          "✅ Pendaftaran Berhasil",
+          `<strong>${patientName}</strong> berhasil didaftarkan!<br><br>
+           📋 Nomor Antrean: <strong>${queueNumber}</strong><br>
+           🏥 Poli: ${poly}`,
+        );
 
-        msg.textContent = `✅ Pasien baru "${newPatient.full_name}" berhasil! Antrean: ${queueNumber}`;
-        msg.className = "text-sm text-green-600 mt-2";
-        msg.classList.remove("hidden");
+        // SATUSEHAT
+        try {
+          const { data: patientData } = await supabaseClient
+            .from("patients")
+            .select("satusehat_ihs")
+            .eq("id", selectedPatientForVisit.id)
+            .single();
+          if (patientData?.satusehat_ihs) {
+            await satusehatBridge.sendEncounter(
+              patientData.satusehat_ihs,
+              selectedPatientForVisit.name,
+              poly,
+              complaint,
+            );
+          }
+        } catch (encounterError) {
+          console.error("❌ Error SATUSEHAT:", encounterError.message);
+        }
 
+        // ✅ Clear form (HANYA 1 KALI!)
         document.getElementById("visit-poly").value = "";
         document.getElementById("visit-complaint").value = "";
         window.clearSelectedPatient();
@@ -578,15 +618,24 @@ export function initRegistration(currentUser, clinicSettings) {
 
         if (rErr) throw rErr;
 
+        // Tampilkan popup
+        window.showNotif(
+          "✅ Pasien Baru Terdaftar",
+          `<strong>${newPatient.full_name}</strong> berhasil didaftarkan!<br><br>
+   📋 Nomor Antrean: <strong>${queueNumber}</strong><br>
+   🏥 Poli: ${poly}`,
+        );
+
+        form.reset();
+
         // ============================================
         // 🚀 KIRIM KUNJUNGAN KE SATUSEHAT
         // ============================================
         try {
-          // Ambil IHS pasien yang baru disimpan
           const { data: patientData } = await supabaseClient
             .from("patients")
             .select("satusehat_ihs")
-            .eq("id", newPatient.id)
+            .eq("id", newPatient.id) // ✅ UBAH KE newPatient
             .single();
 
           if (patientData?.satusehat_ihs) {
@@ -594,7 +643,7 @@ export function initRegistration(currentUser, clinicSettings) {
 
             const encounterResult = await satusehatBridge.sendEncounter(
               patientData.satusehat_ihs,
-              newPatient.full_name,
+              newPatient.full_name, // ✅ UBAH KE newPatient
               poly,
               document.getElementById("new-complaint").value,
             );
@@ -615,10 +664,16 @@ export function initRegistration(currentUser, clinicSettings) {
         }
         // ============================================
 
-        msg.textContent = `✅ Pasien baru "${newPatient.full_name}" berhasil! Antrean: ${queueNumber}`;
-        msg.className = "text-sm text-green-600 mt-2";
+        msg.innerHTML = `✅ <strong>${newPatient.full_name}</strong> berhasil didaftarkan!<br>📋 Nomor Antrean: <strong>${queueNumber}</strong> | 🏥 ${poly}`;
+        msg.className =
+          "text-sm text-green-600 mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800";
         msg.classList.remove("hidden");
         form.reset();
+
+        // Notifikasi hilang setelah 3 detik
+        setTimeout(() => {
+          msg.classList.add("hidden");
+        }, 3000);
       } catch (err) {
         msg.textContent = "❌ Gagal: " + err.message;
         msg.className = "text-sm text-red-600 mt-2";

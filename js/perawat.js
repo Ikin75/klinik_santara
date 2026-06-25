@@ -134,7 +134,11 @@ export function getInputTTVHTML(reg) {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suhu (°C)</label>
-            <input type="number" step="0.1" id="temperature" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary outline-none transition" placeholder="36.5">
+            <input type="text" id="temperature" 
+       class="w-full px-3 py-2 rounded-lg border ..."
+       placeholder="36.5"
+       maxlength="5"
+       oninput="window.autoFormatTemperature(this)">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Berat Badan (kg)</label>
@@ -233,4 +237,21 @@ window.updatePatientHistoryNurse = async function (
       alert("Gagal mengupdate riwayat pasien: " + err.message);
     }
   }
+};
+
+window.autoFormatTemperature = function (input) {
+  // Hapus semua karakter selain angka
+  let value = input.value.replace(/[^0-9]/g, "");
+
+  // Batasi maksimal 4 digit (2 sebelum koma, 2 setelah)
+  if (value.length > 4) value = value.slice(0, 4);
+
+  // Format: tambah titik setelah 2 digit pertama
+  if (value.length >= 3) {
+    value = value.slice(0, 2) + "." + value.slice(2);
+  } else if (value.length === 2) {
+    value = value + ".";
+  }
+
+  input.value = value;
 };

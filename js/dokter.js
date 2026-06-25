@@ -97,19 +97,20 @@ function deepClone(obj) {
 export async function loadDoctorQueue(currentUser) {
   localCurrentUser = currentUser;
   const mainContent = document.getElementById("main-content");
-
   showLoading(mainContent);
 
   try {
     const { data: profileData, error: profileError } = await supabaseClient
       .from("profiles")
-      .select("clinic_id")
+      .select("clinic_id, specialization") // ← TAMBAH specialization
       .eq("id", currentUser.id)
       .single();
 
     if (profileError) throw new Error("Gagal memuat data profil dokter");
 
-    const { data: regs, error } = await supabaseClient
+    const doctorPoli = profileData?.specialization; // ← AMBIL POLI DOKTER
+
+    let query = supabaseClient // ← GANTI const JADI let
       .from("registrations")
       .select(
         "id, queue_number, complaint, target_poly, created_at, patients(full_name)",
@@ -118,11 +119,18 @@ export async function loadDoctorQueue(currentUser) {
       .eq("status", "waiting_doctor")
       .order("created_at", { ascending: true });
 
+    // ← FILTER BY POLI
+    if (doctorPoli) {
+      query = query.eq("target_poly", doctorPoli);
+    }
+
+    const { data: regs, error } = await query; // ← PAKAI query
+
     if (error) throw error;
 
     if (!regs || regs.length === 0) {
       mainContent.innerHTML = getEmptyState(
-        "Belum ada pasien menunggu Dokter.",
+        `Belum ada pasien di ${doctorPoli || "antrian"}.`,
       );
       return;
     }
@@ -130,38 +138,26 @@ export async function loadDoctorQueue(currentUser) {
     mainContent.innerHTML = `
       <div class="max-w-4xl mx-auto fade-in">
         <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          Daftar Antrean Pasien
+          Daftar Antrean ${doctorPoli || "Semua Poli"}  <!-- JUDUL SESUAI POLI -->
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           ${regs
             .map(
               (r) => `
-              <div class="bg-white dark:bg-darkCard p-5 rounded-xl border border-gray-200 dark:border-gray-800 cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 transform hover:-translate-y-1" 
-                   onclick='window.navigateTo("input-soap", ${JSON.stringify(r).replace(/'/g, "&#39;")})'>
-                <div class="flex justify-between items-start mb-3">
-                  <span class="px-3 py-1.5 text-xs font-bold bg-primary/10 text-primary rounded-full">
-                    ${r.queue_number}
-                  </span>
-                  <span class="text-xs text-gray-500">${formatTimeID(r.created_at)}</span>
-                </div>
-                <h4 class="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">
-                  ${r.patients.full_name}
-                </h4>
-                <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
-                  ${r.complaint || "Tidak ada keluhan"}
-                </p>
-                <div class="flex justify-between items-center">
-                  <span class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
-                    ${r.target_poly}
-                  </span>
-                  <span class="text-xs font-semibold text-primary flex items-center gap-1">
-                    Periksa (SOAP) 
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                    </svg>
-                  </span>
-                </div>
-              </div>`,
+            <div class="bg-white dark:bg-darkCard p-5 rounded-xl border border-gray-200 dark:border-gray-800 cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 transform hover:-translate-y-1" 
+                 onclick='window.navigateTo("input-soap", ${JSON.stringify(r).replace(/'/g, "&#39;")})'>
+              <div class="flex justify-between items-start mb-3">
+                <span class="px-3 py-1.5 text-xs font-bold bg-primary/10 text-primary rounded-full">${r.queue_number}</span>
+                <span class="text-xs text-gray-500">${formatTimeID(r.created_at)}</span>
+              </div>
+              <h4 class="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">${r.patients.full_name}</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">${r.complaint || "Tidak ada keluhan"}</p>
+              <div class="flex justify-between items-center">
+                <span class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-300">${r.target_poly}</span>
+                <span class="text-xs font-semibold text-primary flex items-center gap-1">Periksa (SOAP) <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg></span>
+              </div>
+            </div>
+          `,
             )
             .join("")}
         </div>

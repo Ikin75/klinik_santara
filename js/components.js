@@ -16,23 +16,23 @@
  */
 const MENU_CONFIG = {
   // Menu yang selalu tampil
-  permanent: [
-    {
-      view: "registration",
-      label: "Pendaftaran",
-      icon: "registration",
-      roles: null, // null = semua role
-      activeViews: ["registration"],
-    },
-  ],
+  permanent: [],
 
   // Menu berdasarkan role
   roleBased: [
     {
+      view: "registration",
+      label: "Pendaftaran",
+      icon: "registration",
+      roles: ["admin", "owner", "receptionist"],
+      activeViews: ["registration"],
+      divider: false,
+    },
+    {
       view: "dashboard-stats",
       label: "Dashboard Statistik",
       icon: "dashboard",
-      roles: ["admin", "owner"],
+      roles: ["admin", "owner"], // Hanya admin
       activeViews: ["dashboard-stats"],
       divider: false,
     },
@@ -40,7 +40,7 @@ const MENU_CONFIG = {
       view: "triage",
       label: "Antrian TTV (Perawat)",
       icon: "nurse",
-      roles: ["nurse", "admin", "owner"],
+      roles: ["nurse", "admin", "owner"], // Perawat + Admin
       activeViews: ["triage", "input-ttv"],
       condition: (settings) => settings.use_nurse_triage,
       divider: true,
@@ -49,7 +49,7 @@ const MENU_CONFIG = {
       view: "doctor-queue",
       label: "Pemeriksaan Dokter (SOAP)",
       icon: "doctor",
-      roles: ["doctor", "admin", "owner"],
+      roles: ["doctor", "admin", "owner"], // Dokter + Admin
       activeViews: ["doctor-queue", "input-soap"],
       divider: true,
     },
@@ -57,7 +57,7 @@ const MENU_CONFIG = {
       view: "pharmacy",
       label: "Farmasi & Resep",
       icon: "pharmacy",
-      roles: ["pharmacist", "admin", "owner"],
+      roles: ["pharmacist", "admin", "owner"], // Apoteker + Admin
       activeViews: ["pharmacy", "process-prescription"],
       condition: (settings) => settings.has_internal_pharmacy,
       divider: true,
@@ -66,33 +66,33 @@ const MENU_CONFIG = {
       view: "medications",
       label: "Manajemen Obat",
       icon: "medications",
-      roles: ["pharmacist", "admin", "owner"],
+      roles: ["pharmacist", "admin", "owner"], // Apoteker + Admin
       activeViews: ["medications", "medication-stock"],
       condition: (settings) => settings.has_internal_pharmacy,
       divider: false,
     },
     {
-      view: "master-corporate",
-      label: "Master Corporate",
-      icon: "corporate",
-      roles: ["admin", "owner"],
-      activeViews: ["master-corporate"],
-      divider: true,
-    },
-    {
       view: "billing",
       label: "Kasir / Billing",
       icon: "billing",
-      roles: ["admin", "owner"],
+      roles: ["cashier", "admin", "owner"], // Kasir + Admin
       activeViews: ["billing", "billing-detail"],
       divider: true,
     },
     {
-      view: "super-admin",
-      label: "🏢 Manajemen Klinik",
-      icon: "super-admin",
-      roles: ["super_admin"], // Hanya untuk super_admin
-      activeViews: ["super-admin"],
+      view: "manage-users",
+      label: "👥 Manajemen User",
+      icon: "users",
+      roles: ["admin", "owner"], // Hanya admin
+      activeViews: ["manage-users"],
+      divider: true,
+    },
+    {
+      view: "master-corporate",
+      label: "Master Corporate",
+      icon: "corporate",
+      roles: ["admin", "owner"], // Hanya admin
+      activeViews: ["master-corporate"],
       divider: true,
     },
   ],
@@ -270,15 +270,22 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
   }
 
   // Tambahkan footer info
+  // Di buildMenuHTML, cari bagian footer, ganti jadi:
   sections.push(`
-    <div class="mt-6 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-      <div class="flex items-center gap-2 text-xs text-gray-400">
-        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span>${clinicSettings.clinic_name || "Klinik"} - v1.0.0</span>
-      </div>
-      <p class="text-[10px] text-gray-500 mt-1">Role: ${userRole.toUpperCase()}</p>
+  <div class="mt-6 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+    <div class="flex items-center gap-2 mb-2">
+      <img src="https://weqjbnkihgjxzquwltro.supabase.co/storage/v1/object/public/clinic-logos/logo.png" 
+           class="w-6 h-6 rounded object-cover" 
+           alt="KlinikHub"
+           onerror="this.style.display='none'">
+      <span class="text-xs text-gray-400">Powered by <strong>KlinikHub</strong></span>
     </div>
-  `);
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+      <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+      <span>v1.0.0</span>
+    </div>
+  </div>
+`);
 
   return sections.join("");
 }
