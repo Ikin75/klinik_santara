@@ -313,4 +313,28 @@ document.getElementById("btn-logout").addEventListener("click", async () => {
   }
 });
 
+// ============================================
+// MOBILE SIDEBAR TOGGLE
+// ============================================
+window.toggleMobileSidebar = function () {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  sidebar.classList.remove("hidden");
+  sidebar.classList.remove("-translate-x-full");
+  overlay.classList.remove("hidden");
+};
+
+window.closeMobileSidebar = function () {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  sidebar.classList.add("-translate-x-full");
+  overlay.classList.add("hidden");
+
+  setTimeout(() => {
+    sidebar.classList.add("hidden");
+  }, 300);
+};
+
 checkAuth();

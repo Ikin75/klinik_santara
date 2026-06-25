@@ -262,9 +262,60 @@
 
     <!-- DASHBOARD VIEW -->
     <div id="dashboard-view" class="hidden flex-grow flex fade-in">
+      <!-- OVERLAY (klik luar sidebar untuk tutup) -->
+      <div
+        id="sidebar-overlay"
+        class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"
+        onclick="window.closeMobileSidebar()"
+      ></div>
+
       <aside
-        class="w-64 bg-white dark:bg-darkCard border-r border-gray-200 dark:border-gray-800 hidden md:flex flex-col"
+        id="sidebar"
+        class="w-64 bg-white dark:bg-darkCard border-r border-gray-200 dark:border-gray-800 hidden md:flex flex-col fixed md:relative z-50 h-full transition-transform duration-300 -translate-x-full md:translate-x-0"
       >
+        <div
+          class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800"
+        >
+          <img
+            class="clinic-logo w-8 h-8 rounded-lg object-cover mr-3"
+            src=""
+            alt="Logo"
+            style="display: none"
+            onerror="
+              this.style.display = 'none';
+              this.nextElementSibling.style.display = 'flex';
+            "
+          />
+          <div
+            class="clinic-logo-fallback w-8 h-8 bg-primary rounded-lg items-center justify-center text-white font-bold mr-3"
+            style="display: flex"
+          >
+            K
+          </div>
+          <span class="clinic-name font-bold text-xl tracking-tight"
+            >KlinikHub</span
+          >
+
+          <!-- Tombol close mobile -->
+          <button
+            class="ml-auto md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            onclick="window.closeMobileSidebar()"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
         <div
           class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800"
         >
@@ -318,6 +369,26 @@
           class="h-16 bg-white dark:bg-darkCard border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40"
         >
           <div class="flex items-center gap-4">
+            <!-- 🆕 TOMBOL HAMBURGER UNTUK MOBILE -->
+            <button
+              id="mobile-menu-btn"
+              class="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              onclick="window.toggleMobileSidebar()"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
             <h2 id="page-title" class="text-lg font-semibold">Dashboard</h2>
           </div>
           <div class="flex items-center gap-4">
