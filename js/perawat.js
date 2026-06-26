@@ -197,8 +197,13 @@ export function attachTTVListeners(regId, currentUser) {
         .update({ status: "waiting_doctor" })
         .eq("id", regId);
 
-      // Kembali ke halaman antrean perawat secara otomatis
-      window.navigateTo("triage");
+      // ✅ Tampilkan notifikasi dulu
+      window.showSuccess("TTV berhasil disimpan! Pasien dikirim ke Dokter.");
+
+      // ✅ Tunggu 1.5 detik, baru pindah ke antrean
+      setTimeout(() => {
+        window.navigateTo("triage");
+      }, 1500);
     } catch (err) {
       window.showError("Gagal menyimpan data: " + err.message);
       btn.disabled = false;
