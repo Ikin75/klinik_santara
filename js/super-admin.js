@@ -117,6 +117,43 @@ export function renderSuperAdminPage() {
                 </div>
               </div>
             </div>
+
+                      <!-- SATUSEHAT Settings -->
+          <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800">
+            <h4 class="font-semibold text-orange-800 dark:text-orange-300 mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"></path>
+              </svg>
+              📡 Integrasi SATUSEHAT
+            </h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Client ID</label>
+                <input type="text" id="clinic-satusehat-id" 
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
+                       placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Client Secret</label>
+                <input type="password" id="clinic-satusehat-secret" 
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
+                       placeholder="••••••••••••••••••••••••">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Organization ID</label>
+                <input type="text" id="clinic-satusehat-org" 
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary"
+                       placeholder="100001">
+              </div>
+              <div class="flex items-end">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="clinic-satusehat-enabled" class="w-4 h-4 text-primary rounded focus:ring-primary">
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Aktifkan SATUSEHAT</span>
+                </label>
+              </div>
+            </div>
+          </div>
           </div>
 
           <!-- Admin Account -->
@@ -325,6 +362,19 @@ function setupClinicFormListeners() {
             address:
               document.getElementById("clinic-address").value.trim() || null,
             phone: document.getElementById("clinic-phone").value.trim() || null,
+            // 🆕 SATUSEHAT
+            satusehat_client_id:
+              document.getElementById("clinic-satusehat-id").value.trim() ||
+              null,
+            satusehat_client_secret:
+              document.getElementById("clinic-satusehat-secret").value.trim() ||
+              null,
+            satusehat_org_id:
+              document.getElementById("clinic-satusehat-org").value.trim() ||
+              null,
+            satusehat_enabled: document.getElementById(
+              "clinic-satusehat-enabled",
+            ).checked,
           })
           .eq("id", editId)
           .select()
@@ -351,6 +401,20 @@ function setupClinicFormListeners() {
                 document.getElementById("clinic-address").value.trim() || null,
               phone:
                 document.getElementById("clinic-phone").value.trim() || null,
+              // 🆕 SATUSEHAT
+              satusehat_client_id:
+                document.getElementById("clinic-satusehat-id").value.trim() ||
+                null,
+              satusehat_client_secret:
+                document
+                  .getElementById("clinic-satusehat-secret")
+                  .value.trim() || null,
+              satusehat_org_id:
+                document.getElementById("clinic-satusehat-org").value.trim() ||
+                null,
+              satusehat_enabled: document.getElementById(
+                "clinic-satusehat-enabled",
+              ).checked,
             },
           ])
           .select()
@@ -443,7 +507,15 @@ window.editClinic = async function (clinicId) {
       .single();
 
     if (error) throw error;
-
+    // Isi field SATUSEHAT
+    document.getElementById("clinic-satusehat-id").value =
+      clinic.satusehat_client_id || "";
+    document.getElementById("clinic-satusehat-secret").value =
+      clinic.satusehat_client_secret || "";
+    document.getElementById("clinic-satusehat-org").value =
+      clinic.satusehat_org_id || "";
+    document.getElementById("clinic-satusehat-enabled").checked =
+      clinic.satusehat_enabled || false;
     // Isi form dengan data klinik
     document.getElementById("modal-title").textContent = "✏️ Edit Klinik";
     document.getElementById("clinic-name").value = clinic.name || "";
