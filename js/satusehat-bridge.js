@@ -27,9 +27,14 @@ export class SatusehatBridge {
     try {
       const clinicId =
         localStorage.getItem("clinic_id") || window.currentClinicId;
-      if (!clinicId) return;
+      console.log("🔍 Loading credentials for clinic:", clinicId);
 
-      const { data: clinic } = await supabaseClient
+      if (!clinicId) {
+        console.warn("⚠️ clinicId tidak ditemukan!");
+        return;
+      }
+
+      const { data: clinic, error } = await supabaseClient
         .from("clinics")
         .select(
           "satusehat_client_id, satusehat_client_secret, satusehat_org_id",
@@ -37,11 +42,20 @@ export class SatusehatBridge {
         .eq("id", clinicId)
         .single();
 
+      console.log("📦 Clinic data:", clinic);
+      console.log("📦 Error:", error);
+
       if (clinic?.satusehat_client_id) {
         this.clientId = clinic.satusehat_client_id;
         this.clientSecret = clinic.satusehat_client_secret;
         this.orgId = clinic.satusehat_org_id;
-        console.log("✅ SATUSEHAT credentials loaded");
+        console.log("✅ Client ID:", this.clientId?.substring(0, 10) + "...");
+        console.log(
+          "✅ Client Secret:",
+          this.clientSecret?.substring(0, 10) + "...",
+        );
+      } else {
+        console.warn("⚠️ Kredensial SATUSEHAT kosong di database!");
       }
     } catch (err) {
       console.warn("⚠️ Gagal load credentials:", err.message);
