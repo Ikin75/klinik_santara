@@ -224,11 +224,11 @@ window.saveMedication = async () => {
   };
 
   if (!data.name) {
-    alert("❌ Nama obat wajib diisi!");
+    window.showWarning("Nama obat wajib diisi!");
     return;
   }
   if (data.price_sell <= 0) {
-    alert("⚠️ Peringatan: Harga jual belum diatur atau Rp 0.");
+    window.showWarning("Harga jual belum diatur!");
   }
 
   try {
@@ -252,12 +252,12 @@ window.saveMedication = async () => {
       if (error) throw error; // Lempar error jika gagal
     }
 
-    alert("✅ Data obat berhasil disimpan ke database!");
+    window.showSuccess("Data obat berhasil disimpan!");
     // Muat ulang tampilan agar data baru muncul
     loadMedicationManagement(user);
   } catch (err) {
     console.error("Gagal menyimpan obat:", err);
-    alert("❌ Gagal menyimpan data ke database:\n" + err.message);
+    window.showError("Gagal menyimpan data: " + err.message);
   }
 };
 
