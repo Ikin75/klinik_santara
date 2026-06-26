@@ -1714,11 +1714,9 @@ async function submitSOAPWithMedications() {
   }
 
   // Konfirmasi
-  const confirmed = confirm(
-    "Apakah Anda yakin ingin menyimpan data pemeriksaan dan mengirim resep ke farmasi?\n\n" +
-      "• Data akan dikirim ke farmasi\n" +
-      "• Stok obat akan otomatis berkurang (untuk obat database)\n" +
-      "• Status pasien akan berubah menjadi 'Menunggu Farmasi'",
+  const confirmed = await window.showConfirm(
+    "Simpan Pemeriksaan?",
+    "Apakah Anda yakin ingin menyimpan data pemeriksaan dan mengirim resep ke farmasi?",
   );
 
   if (!confirmed) return;
@@ -2092,7 +2090,7 @@ window.updatePatientHistory = async function (patientId, currentHistory) {
 
     if (error) throw error;
 
-    alert("✅ Riwayat medis berhasil diperbarui!");
+    window.showSuccess("Riwayat medis berhasil diperbarui!");
 
     // Reload halaman SOAP untuk memperbarui tampilan
     if (window.currentRegistrationId && localCurrentUser) {
@@ -2297,44 +2295,6 @@ window.openHistoryModal = async function (patientId, patientName) {
                 }
                         // ... kode diagnosa sekunder ...
 
-        // ============================================
-        // 🚀 KIRIM RESEP KE SATUSEHAT
-        // ============================================
-        try {
-          // Cek apakah ada obat yang diresepkan
-          if (medicationState.items.length > 0) {
-            console.log('💊 Mengirim resep ke SATUSEHAT...');
-            console.log('   Jumlah obat:', medicationState.items.length);
-            
-            const medicationResult = await satusehatBridge.sendMedicationRequest(
-              patient.satusehat_ihs,
-              reg.satusehat_encounter_ihs,
-              medicationState.items
-            );
-
-            if (medicationResult.success) {
-              console.log('✅ Resep terkirim:', medicationResult.medicationIHS);
-              
-              // Simpan IHS resep ke database
-              await supabaseClient
-                .from("prescriptions")
-                .update({
-                  satusehat_ihs: medicationResult.medicationIHS,
-                  satusehat_sync_at: new Date().toISOString()
-                })
-                .eq("registration_id", doctorCurrentRegistrationId);
-            } else {
-              console.warn('⚠️ Gagal kirim resep:', medicationResult.error);
-            }
-          } else {
-            console.log('ℹ️ Tidak ada obat diresepkan');
-          }
-        } catch (medError) {
-          console.error('❌ Error kirim resep:', medError.message);
-        }
-        // ============================================
-
-      } // ← Tutup if (patient?.satusehat_ihs)
     } // ← Tutup if (reg)
   } catch (conditionError) {
     console.error('❌ Error kirim diagnosa:', conditionError.message);
