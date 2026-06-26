@@ -115,12 +115,14 @@ window.updateRxStatus = async function (rxId, status, regId) {
         .from("registrations")
         .update({ status: "waiting_payment" })
         .eq("id", regId);
-      alert("✅ Resep selesai diserahkan. Pasien dialihkan ke Kasir.");
-      window.navigateTo("pharmacy");
+      window.showSuccess(
+        "Resep selesai diserahkan! Pasien dialihkan ke Kasir.",
+      );
+      setTimeout(() => window.navigateTo("pharmacy"), 1000);
     } else {
-      alert(`Status diperbarui menjadi: ${status}`);
+      window.showSuccess(`Status diperbarui menjadi: ${status}`);
     }
   } catch (err) {
-    alert("Gagal update status: " + err.message);
+    window.showError("Gagal update status: " + err.message);
   }
 };
