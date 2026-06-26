@@ -352,7 +352,7 @@ function getSectionTitle(view) {
     "dashboard-stats": "Manajemen",
     "super-admin": "Super Admin",
   };
-  return titles[view] || "Lainnya";
+  // return titles[view] || "Lainnya";
 }
 
 /**
