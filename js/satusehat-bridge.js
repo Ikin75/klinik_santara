@@ -1,59 +1,101 @@
-// ============================================
-// SATUSEHAT BRIDGE - JEMBATAN KE SATUSEHAT
-// ============================================
+// js/satusehat-bridge.js
+
+import { supabaseClient } from "./config.js";
 
 export class SatusehatBridge {
   constructor() {
-    // Alamat mock server (nanti ganti ke SATUSEHAT asli)
-    this.baseURL = "http://localhost:3001";
     this.token = null;
+    this.clientId = null;
+    this.clientSecret = null;
+    this.orgId = null;
+
+    // Auto-detect environment
+    const isDev =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+
+    if (isDev) {
+      this.baseURL = "http://localhost:3001";
+      this.authURL = "http://localhost:3001/oauth2/v1/accesstoken";
+    } else {
+      this.baseURL = "https://api-satusehat-stg.kemkes.go.id/fhir-r4/v1";
+      this.authURL = "https://api-satusehat-stg.kemkes.go.id/oauth2/v1";
+    }
   }
 
-  /**
-   * Dapatkan token akses
-   */
+  async loadCredentials() {
+    try {
+      const clinicId =
+        localStorage.getItem("clinic_id") || window.currentClinicId;
+      if (!clinicId) return;
+
+      const { data: clinic } = await supabaseClient
+        .from("clinics")
+        .select(
+          "satusehat_client_id, satusehat_client_secret, satusehat_org_id",
+        )
+        .eq("id", clinicId)
+        .single();
+
+      if (clinic?.satusehat_client_id) {
+        this.clientId = clinic.satusehat_client_id;
+        this.clientSecret = clinic.satusehat_client_secret;
+        this.orgId = clinic.satusehat_org_id;
+        console.log("✅ SATUSEHAT credentials loaded");
+      }
+    } catch (err) {
+      console.warn("⚠️ Gagal load credentials:", err.message);
+    }
+  }
+
   async getToken() {
     try {
-      console.log("🔐 Mengambil token SATUSEHAT...");
+      if (!this.clientId) await this.loadCredentials();
 
-      const response = await fetch(`${this.baseURL}/oauth2/v1/accesstoken`, {
+      const isDev = this.baseURL.includes("localhost");
+
+      const body = isDev
+        ? "client_id=test&client_secret=test&grant_type=client_credentials"
+        : `client_id=${this.clientId}&client_secret=${this.clientSecret}&grant_type=client_credentials`;
+
+      const url = isDev ? this.authURL : this.authURL + "/accesstoken";
+
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "client_id=test&client_secret=test&grant_type=client_credentials",
+        body: body,
       });
 
       if (!response.ok) {
-        throw new Error(`Gagal dapat token: ${response.status}`);
+        const err = await response.text();
+        throw new Error(`Gagal token: ${response.status} - ${err}`);
       }
 
       const data = await response.json();
       this.token = data.access_token;
-
-      console.log("✅ Token didapat");
+      console.log("✅ Token SATUSEHAT didapat");
       return this.token;
     } catch (error) {
-      console.error("❌ Gagal dapat token:", error.message);
+      console.error("❌ Gagal token:", error.message);
       throw error;
     }
   }
 
-  /**
-   * Daftarkan pasien ke SATUSEHAT
-   * @param {Object} patientData - Data pasien dari database
-   * @returns {Object} { success, ihsNumber, error }
-   */
+  async testConnection() {
+    try {
+      await this.getToken();
+      console.log("✅ SATUSEHAT TERHUBUNG!");
+      return { connected: true };
+    } catch (error) {
+      console.error("❌ SATUSEHAT OFFLINE:", error.message);
+      return { connected: false, error: error.message };
+    }
+  }
+
   async registerPatient(patientData) {
     try {
-      // 1. Pastikan punya token
-      if (!this.token) {
-        await this.getToken();
-      }
+      if (!this.token) await this.getToken();
 
-      console.log("👤 Mendaftarkan pasien ke SATUSEHAT...");
-      console.log("   Nama:", patientData.full_name);
-      console.log("   NIK:", patientData.nik);
-
-      // 2. Format data sesuai FHIR
       const fhirData = {
         resourceType: "Patient",
         active: true,
@@ -71,30 +113,15 @@ export class SatusehatBridge {
           },
         ],
         gender:
-          patientData.gender === "Laki-laki"
+          patientData.gender === "Laki-laki" || patientData.gender === "L"
             ? "male"
-            : patientData.gender === "Perempuan"
+            : patientData.gender === "Perempuan" || patientData.gender === "P"
               ? "female"
               : "unknown",
         birthDate: patientData.birth_date || null,
         telecom: [
           ...(patientData.phone
-            ? [
-                {
-                  system: "phone",
-                  value: patientData.phone,
-                  use: "mobile",
-                },
-              ]
-            : []),
-          ...(patientData.email
-            ? [
-                {
-                  system: "email",
-                  value: patientData.email,
-                  use: "home",
-                },
-              ]
+            ? [{ system: "phone", value: patientData.phone, use: "mobile" }]
             : []),
         ],
         address: patientData.address
@@ -102,15 +129,13 @@ export class SatusehatBridge {
               {
                 use: "home",
                 line: [patientData.address],
-                city: patientData.city || "",
                 country: "ID",
               },
             ]
           : [],
       };
 
-      // 3. Kirim ke SATUSEHAT
-      const response = await fetch(`${this.baseURL}/fhir-r4/v1/Patient`, {
+      const response = await fetch(`${this.baseURL}/Patient`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -119,46 +144,27 @@ export class SatusehatBridge {
         body: JSON.stringify(fhirData),
       });
 
-      // 4. Handle response
       if (response.status === 401) {
-        // Token expired, refresh & coba lagi
-        console.log("🔄 Token expired, refresh...");
         await this.getToken();
         return this.registerPatient(patientData);
       }
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(JSON.stringify(error));
+        const err = await response.text();
+        throw new Error(err);
       }
 
       const result = await response.json();
-
-      console.log("✅ Pasien terdaftar di SATUSEHAT!");
-      console.log("   IHS Number:", result.id);
-
-      return {
-        success: true,
-        ihsNumber: result.id,
-        message: "Berhasil terdaftar di SATUSEHAT",
-      };
+      return { success: true, ihsNumber: result.id };
     } catch (error) {
       console.error("❌ Gagal daftar pasien:", error.message);
-      return {
-        success: false,
-        error: error.message,
-      };
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Kirim data kunjungan
-   */
-  async sendEncounter(patientIHS, patientName, poli) {
+  async sendEncounter(patientIHS, patientName, poli, complaint) {
     try {
       if (!this.token) await this.getToken();
-
-      console.log("🏥 Mengirim kunjungan ke SATUSEHAT...");
 
       const fhirData = {
         resourceType: "Encounter",
@@ -172,20 +178,11 @@ export class SatusehatBridge {
           reference: `Patient/${patientIHS}`,
           display: patientName,
         },
-        period: {
-          start: new Date().toISOString(),
-        },
-        reasonCode: [
-          {
-            text: `Kunjungan ${poli || "Poli Umum"}`,
-          },
-        ],
-        serviceProvider: {
-          reference: "Organization/ORG-001",
-        },
+        period: { start: new Date().toISOString() },
+        reasonCode: [{ text: complaint || `Kunjungan ${poli}` }],
       };
 
-      const response = await fetch(`${this.baseURL}/fhir-r4/v1/Encounter`, {
+      const response = await fetch(`${this.baseURL}/Encounter`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -194,40 +191,19 @@ export class SatusehatBridge {
         body: JSON.stringify(fhirData),
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) throw new Error(await response.text());
 
       const result = await response.json();
-
-      console.log("✅ Kunjungan terkirim!");
-      console.log("   Encounter IHS:", result.id);
-
-      return {
-        success: true,
-        encounterIHS: result.id,
-      };
+      return { success: true, encounterIHS: result.id };
     } catch (error) {
-      console.error("❌ Gagal kirim kunjungan:", error.message);
-      return {
-        success: false,
-        error: error.message,
-      };
+      console.error("❌ Gagal kirim encounter:", error.message);
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Kirim data diagnosa (Condition) ke SATUSEHAT
-   * @param {string} patientIHS - IHS Number pasien
-   * @param {string} icd10Code - Kode ICD-10 (contoh: J00)
-   * @param {string} icd10Name - Nama diagnosa (contoh: Acute nasopharyngitis)
-   * @returns {Object} { success, conditionIHS, error }
-   */
-  async sendCondition(patientIHS, icd10Code, icd10Name, encounterIHS = null) {
+  async sendCondition(patientIHS, icd10Code, icd10Name) {
     try {
       if (!this.token) await this.getToken();
-
-      console.log("🏷️ Mengirim diagnosa ke SATUSEHAT...");
-      console.log("   Kode ICD-10:", icd10Code);
-      console.log("   Nama:", icd10Name);
 
       const fhirData = {
         resourceType: "Condition",
@@ -237,32 +213,9 @@ export class SatusehatBridge {
               system:
                 "http://terminology.hl7.org/CodeSystem/condition-clinical",
               code: "active",
-              display: "Active",
             },
           ],
         },
-        verificationStatus: {
-          coding: [
-            {
-              system:
-                "http://terminology.hl7.org/CodeSystem/condition-ver-status",
-              code: "confirmed",
-              display: "Confirmed",
-            },
-          ],
-        },
-        category: [
-          {
-            coding: [
-              {
-                system:
-                  "http://terminology.hl7.org/CodeSystem/condition-category",
-                code: "encounter-diagnosis",
-                display: "Encounter Diagnosis",
-              },
-            ],
-          },
-        ],
         code: {
           coding: [
             {
@@ -273,20 +226,10 @@ export class SatusehatBridge {
           ],
           text: `${icd10Code} - ${icd10Name}`,
         },
-        subject: {
-          reference: `Patient/${patientIHS}`,
-        },
-        onsetDateTime: new Date().toISOString(),
+        subject: { reference: `Patient/${patientIHS}` },
       };
 
-      // Tambahkan encounter reference jika ada
-      if (encounterIHS) {
-        fhirData.encounter = {
-          reference: `Encounter/${encounterIHS}`,
-        };
-      }
-
-      const response = await fetch(`${this.baseURL}/fhir-r4/v1/Condition`, {
+      const response = await fetch(`${this.baseURL}/Condition`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -295,189 +238,41 @@ export class SatusehatBridge {
         body: JSON.stringify(fhirData),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(JSON.stringify(error));
-      }
+      if (!response.ok) throw new Error(await response.text());
 
       const result = await response.json();
-
-      console.log("✅ Diagnosa terkirim!");
-      console.log("   Condition IHS:", result.id);
-
-      return {
-        success: true,
-        conditionIHS: result.id,
-      };
+      return { success: true, conditionIHS: result.id };
     } catch (error) {
       console.error("❌ Gagal kirim diagnosa:", error.message);
-      return {
-        success: false,
-        error: error.message,
-      };
+      return { success: false, error: error.message };
     }
   }
 
-  /**
-   * Kirim data resep obat (MedicationRequest) ke SATUSEHAT
-   * @param {string} patientIHS - IHS Number pasien
-   * @param {string} encounterIHS - IHS Number kunjungan
-   * @param {Array} medications - Array obat [{ drug_name, dose, qty }]
-   * @returns {Object} { success, medicationIHS, error }
-   */
-  async sendMedicationRequest(patientIHS, encounterIHS, medications) {
+  async sendMedicationRequest(patientIHS, medications) {
     try {
       if (!this.token) await this.getToken();
 
-      console.log("💊 Mengirim resep ke SATUSEHAT...");
-      console.log("   Jumlah obat:", medications.length);
-
-      // Gabungkan nama obat untuk display
       const drugNames = medications
         .map((m) => `${m.drug_name} ${m.dose}`)
         .join(", ");
-      const totalQty = medications.reduce((sum, m) => sum + (m.qty || 0), 0);
-
-      // Buat dosage instruction untuk setiap obat
-      const dosageInstruction = medications.map((med, index) => ({
-        sequence: index + 1,
-        text: `${med.drug_name} - ${med.dose}`,
-        timing: {
-          code: {
-            text: med.dose || "1x1",
-          },
-        },
-        doseAndRate: [
-          {
-            doseQuantity: {
-              value: med.qty || 1,
-              unit: "Tablet",
-              system: "http://unitsofmeasure.org",
-              code: "{tbl}",
-            },
-          },
-        ],
-      }));
 
       const fhirData = {
         resourceType: "MedicationRequest",
         status: "active",
         intent: "order",
-        medicationCodeableConcept: {
-          text: drugNames,
-        },
-        subject: {
-          reference: `Patient/${patientIHS}`,
-        },
-        encounter: {
-          reference: `Encounter/${encounterIHS}`,
-        },
+        medicationCodeableConcept: { text: drugNames },
+        subject: { reference: `Patient/${patientIHS}` },
         authoredOn: new Date().toISOString(),
-        dosageInstruction: dosageInstruction,
-        dispenseRequest: {
-          quantity: {
-            value: totalQty,
-            unit: "Tablet",
-          },
-        },
+        dosageInstruction: medications.map((med, i) => ({
+          sequence: i + 1,
+          text: `${med.drug_name} - ${med.dose}`,
+          doseAndRate: [
+            { doseQuantity: { value: med.qty || 1, unit: "Tablet" } },
+          ],
+        })),
       };
 
-      const response = await fetch(
-        `${this.baseURL}/fhir-r4/v1/MedicationRequest`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(fhirData),
-        },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(JSON.stringify(error));
-      }
-
-      const result = await response.json();
-
-      console.log("✅ Resep terkirim!");
-      console.log("   Medication Request IHS:", result.id);
-      console.log("   Obat:", drugNames);
-
-      return {
-        success: true,
-        medicationIHS: result.id,
-      };
-    } catch (error) {
-      console.error("❌ Gagal kirim resep:", error.message);
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-  }
-
-  /**
-   * Cek koneksi ke SATUSEHAT
-   */
-  async testConnection() {
-    try {
-      console.log("🔌 Testing koneksi ke SATUSEHAT...");
-
-      const response = await fetch(`${this.baseURL}/dashboard`);
-
-      if (response.ok) {
-        console.log("✅ SATUSEHAT TERHUBUNG!");
-        return { connected: true };
-      } else {
-        console.log("❌ SATUSEHAT tidak terjangkau");
-        return { connected: false };
-      }
-    } catch (error) {
-      console.log("❌ SATUSEHAT OFFLINE:", error.message);
-      return { connected: false, error: error.message };
-    }
-  }
-
-  /**
-   * Kirim data kunjungan (Encounter)
-   */
-  async sendEncounter(patientIHS, patientName, poli, complaint) {
-    try {
-      if (!this.token) await this.getToken();
-
-      console.log("🏥 Mengirim kunjungan ke SATUSEHAT...");
-      console.log("   Pasien:", patientName);
-      console.log("   Poli:", poli);
-
-      const fhirData = {
-        resourceType: "Encounter",
-        status: "planned",
-        class: {
-          system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-          code: "AMB",
-          display: "ambulatory",
-        },
-        subject: {
-          reference: `Patient/${patientIHS}`,
-          display: patientName,
-        },
-        period: {
-          start: new Date().toISOString(),
-        },
-        reasonCode: [
-          {
-            text: complaint || `Kunjungan ${poli || "Poli Umum"}`,
-          },
-        ],
-        serviceProvider: {
-          reference: "Organization/ORG-001",
-          display: "Klinik Test",
-        },
-      };
-
-      const response = await fetch(`${this.baseURL}/fhir-r4/v1/Encounter`, {
+      const response = await fetch(`${this.baseURL}/MedicationRequest`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -486,29 +281,15 @@ export class SatusehatBridge {
         body: JSON.stringify(fhirData),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(JSON.stringify(error));
-      }
+      if (!response.ok) throw new Error(await response.text());
 
       const result = await response.json();
-
-      console.log("✅ Kunjungan terkirim!");
-      console.log("   Encounter IHS:", result.id);
-
-      return {
-        success: true,
-        encounterIHS: result.id,
-      };
+      return { success: true, medicationIHS: result.id };
     } catch (error) {
-      console.error("❌ Gagal kirim kunjungan:", error.message);
-      return {
-        success: false,
-        error: error.message,
-      };
+      console.error("❌ Gagal kirim resep:", error.message);
+      return { success: false, error: error.message };
     }
   }
 }
 
-// Export instance tunggal (singleton)
 export const satusehatBridge = new SatusehatBridge();
