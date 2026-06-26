@@ -702,39 +702,6 @@ window.toggleCorporateFields = function () {
   const divDept = document.getElementById("div-department");
   const compSelect = document.getElementById("reg-company");
 
-  if (compSelect) {
-    compSelect.innerHTML = '<option value="">-- Pilih Perusahaan --</option>';
-    if (window.allMasterCompanies) {
-      const filteredCompanies = window.allMasterCompanies.filter(
-        (c) => c.type === cat,
-      );
-      filteredCompanies.forEach((c) => {
-        compSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-      });
-    }
-  }
-
-  if (cat === "Karyawan") {
-    divCompany.classList.remove("hidden");
-    divDept.classList.remove("hidden");
-  } else if (cat === "Vendor") {
-    divCompany.classList.remove("hidden");
-    divDept.classList.add("hidden");
-    document.getElementById("reg-department").value = "";
-  } else {
-    divCompany.classList.add("hidden");
-    divDept.classList.add("hidden");
-    if (compSelect) compSelect.value = "";
-    document.getElementById("reg-department").value = "";
-  }
-};
-
-window.toggleCorporateFields = function () {
-  const cat = document.getElementById("reg-category").value;
-  const divCompany = document.getElementById("div-company");
-  const divDept = document.getElementById("div-department");
-  const compSelect = document.getElementById("reg-company");
-
   // 🛠️ FILTER DATA PT SECARA DINAMIS
   if (compSelect) {
     compSelect.innerHTML = '<option value="">-- Pilih Perusahaan --</option>';
