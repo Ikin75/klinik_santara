@@ -1320,7 +1320,7 @@ window.toggleToothCondition = async function (condition) {
     // Refresh modal
     await window.openToothModal(currentSelectedTooth);
   } catch (err) {
-    alert("❌ Gagal menyimpan kondisi gigi: " + err.message);
+    window.showError("Gagal menyimpan kondisi gigi: " + err.message);
   }
 };
 
@@ -1530,7 +1530,7 @@ function setupMedicationSearch() {
 
 window.addMedicationFromDatabase = function (id, name, strength, stock) {
   if (stock <= 0) {
-    alert("⚠️ Stok obat habis! Tidak bisa menambahkan.");
+    window.showError("Stok obat habis!");
     return;
   }
 

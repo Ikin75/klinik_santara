@@ -24,6 +24,7 @@ import { loadStatisticsDashboard } from "./statistik.js";
 import { loadMasterCorporate } from "./master_corporate.js";
 import { initSuperAdmin } from "./super-admin.js";
 import { renderManageUsers } from "./manage-users.js";
+import "./notif.js";
 
 // 2. Variabel Global
 let currentUser = null;
@@ -277,7 +278,7 @@ window.handlePrintClick = async function () {
     .maybeSingle();
 
   if (!existingSOAP) {
-    alert("Simpan data SOAP terlebih dahulu sebelum mencetak!");
+    window.showWarning("Simpan data SOAP terlebih dahulu sebelum mencetak!");
     return;
   }
 
@@ -293,7 +294,10 @@ window.handlePrintClick = async function () {
 // LOGOUT HANDLER
 // ============================================
 document.getElementById("btn-logout").addEventListener("click", async () => {
-  const confirmLogout = confirm("Apakah Anda yakin ingin keluar?");
+  const confirmLogout = await window.showConfirm(
+    "Keluar?",
+    "Apakah Anda yakin ingin keluar?",
+  );
   if (!confirmLogout) return;
 
   try {

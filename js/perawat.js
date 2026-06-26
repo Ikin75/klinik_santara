@@ -200,7 +200,7 @@ export function attachTTVListeners(regId, currentUser) {
       // Kembali ke halaman antrean perawat secara otomatis
       window.navigateTo("triage");
     } catch (err) {
-      alert("❌ Gagal menyimpan data: " + err.message);
+      window.showError("Gagal menyimpan data: " + err.message);
       btn.disabled = false;
       btn.innerHTML = originalBtnContent;
     }
@@ -215,28 +215,48 @@ window.updatePatientHistoryNurse = async function (
   currentHistory,
   regData,
 ) {
-  const newHistory = prompt(
-    "Masukkan Riwayat Alergi / Penyakit Kronis Pasien:\n(Contoh: Alergi Amoxicillin, Hipertensi, DM Tipe 2)\n\nKosongkan jika tidak ada/ingin dihapus.",
-    currentHistory,
-  );
+  // Ganti prompt dengan modal input sederhana
+  const modal = document.createElement("div");
+  modal.className =
+    "fixed inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm";
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-6 animate-bounce-in">
+      <h3 class="text-lg font-bold mb-2">✏️ Update Riwayat Medis</h3>
+      <p class="text-sm text-gray-500 mb-4">Masukkan Riwayat Alergi / Penyakit Kronis Pasien:</p>
+      <textarea id="history-input" rows="4" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 outline-none text-sm">${currentHistory || ""}</textarea>
+      <p class="text-xs text-gray-400 mt-2">Contoh: Alergi Amoxicillin, Hipertensi, DM Tipe 2. Kosongkan jika tidak ada.</p>
+      <div class="flex gap-3 mt-4">
+        <button id="cancel-history" class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg font-medium">Batal</button>
+        <button id="save-history" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-medium">Simpan</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
 
-  if (newHistory !== null) {
+  // Handle save
+  document.getElementById("save-history").onclick = async () => {
+    const newHistory = document.getElementById("history-input").value.trim();
+    modal.remove();
+
     try {
-      // 1. Simpan ke database
       await supabaseClient
         .from("patients")
-        .update({ medical_history: newHistory.trim() })
+        .update({ medical_history: newHistory })
         .eq("id", patientId);
 
-      // 2. Update data lokal agar layarnya langsung refresh tanpa perlu ke database lagi
-      regData.patients.medical_history = newHistory.trim();
-
-      // 3. Render ulang halaman TTV
+      regData.patients.medical_history = newHistory;
       window.navigateTo("input-ttv", regData);
+      window.showSuccess("Riwayat medis berhasil diupdate!");
     } catch (err) {
-      alert("Gagal mengupdate riwayat pasien: " + err.message);
+      window.showError("Gagal mengupdate riwayat pasien: " + err.message);
     }
-  }
+  };
+
+  // Handle cancel
+  document.getElementById("cancel-history").onclick = () => modal.remove();
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
 };
 
 window.autoFormatTemperature = function (input) {

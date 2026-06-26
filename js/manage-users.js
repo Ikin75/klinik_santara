@@ -210,12 +210,17 @@ window.closeUserModal = () => {
 };
 
 window.deleteUser = async (userId, userName) => {
-  if (!confirm(`Hapus user "${userName}"?`)) return;
+  const confirmed = await window.showConfirm(
+    "Hapus User?",
+    `Hapus user "${userName}"?`,
+    "error",
+  );
+  if (!confirmed) return;
   try {
     await supabaseClient.from("profiles").delete().eq("id", userId);
-    alert("✅ User dihapus!");
+    window.showSuccess("User dihapus!");
     loadUserList();
   } catch (err) {
-    alert("❌ Gagal: " + err.message);
+    window.showError("Gagal: " + err.message);
   }
 };

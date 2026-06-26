@@ -557,7 +557,7 @@ window.editClinic = async function (clinicId) {
     // Tampilkan modal
     document.getElementById("clinic-modal").classList.remove("hidden");
   } catch (err) {
-    alert("❌ Gagal load data klinik: " + err.message);
+    window.showError("Gagal load data klinik: " + err.message);
   }
 };
 
