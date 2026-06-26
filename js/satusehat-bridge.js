@@ -54,26 +54,59 @@ export class SatusehatBridge {
 
       const isDev = this.baseURL.includes("localhost");
 
-      const body = isDev
-        ? "client_id=test&client_secret=test&grant_type=client_credentials"
-        : `client_id=${this.clientId}&client_secret=${this.clientSecret}&grant_type=client_credentials`;
+      if (isDev) {
+        // Mock server
+        const body =
+          "client_id=test&client_secret=test&grant_type=client_credentials";
+        const response = await fetch(this.authURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: body,
+        });
+        const data = await response.json();
+        this.token = data.access_token;
+        console.log("✅ Token Mock didapat");
+        return this.token;
+      }
 
-      const url = isDev ? this.authURL : this.authURL + "/accesstoken";
+      // SATUSEHAT ASLI - Coba 2 cara:
 
-      const response = await fetch(url, {
+      // CARA 1: Basic Auth
+      console.log("🔐 Mencoba Basic Auth...");
+      const basicAuth = btoa(`${this.clientId}:${this.clientSecret}`);
+
+      let response = await fetch(this.authURL + "/accesstoken", {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${basicAuth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: "grant_type=client_credentials",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.token = data.access_token;
+        console.log("✅ Token SATUSEHAT didapat (Basic Auth)");
+        return this.token;
+      }
+
+      // CARA 2: POST body
+      console.log("🔐 Mencoba POST body...");
+      response = await fetch(this.authURL + "/accesstoken", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body,
+        body: `client_id=${encodeURIComponent(this.clientId)}&client_secret=${encodeURIComponent(this.clientSecret)}&grant_type=client_credentials`,
       });
 
       if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Gagal token: ${response.status} - ${err}`);
+        const errText = await response.text();
+        throw new Error(`Gagal token: ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       this.token = data.access_token;
-      console.log("✅ Token SATUSEHAT didapat");
+      console.log("✅ Token SATUSEHAT didapat (POST body)");
       return this.token;
     } catch (error) {
       console.error("❌ Gagal token:", error.message);
