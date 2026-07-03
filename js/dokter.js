@@ -277,7 +277,7 @@ function buildSOAPHTML(reg, ttv) {
       <div id="odontogram-container"></div>
 
       <!-- Form SOAP -->
-      <div class="bg-white dark:bg-darkCard p-6 rounded-xl border border-gray-200 dark:border-gray-800 mb-4 shadow-sm">
+      <div id="soap-section" data-patient-name="${reg.patients.full_name}">
         <h4 class="font-semibold text-lg mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-100">
           <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -339,10 +339,7 @@ function buildSOAPHTML(reg, ttv) {
                 Tandai Jika Terkait Insiden (Opsional)
               </p>
               <div class="flex gap-6">
-                <label class="flex items-center gap-3 text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer hover:text-red-600 transition">
-                  <input type="checkbox" id="soap-kk" class="w-4 h-4 text-red-600 rounded focus:ring-red-500">
-                  Kecelakaan Kerja (KK)
-                </label>
+                <label class="flex items-center gap-3 text-sm cursor-pointer"><input type="checkbox" id="soap-kk" class="w-4 h-4 text-red-600 rounded" onchange="window.toggleKKModal()"> Kecelakaan Kerja</label>
                 <label class="flex items-center gap-3 text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer hover:text-red-600 transition">
                   <input type="checkbox" id="soap-kll" class="w-4 h-4 text-red-600 rounded focus:ring-red-500">
                   Kecelakaan Lalu Lintas (KLL)
@@ -1845,10 +1842,34 @@ async function submitSOAPWithMedications() {
       .upsert([soapData], { onConflict: "registration_id" });
 
     if (soapError) {
-      // Rollback stok
       await rollbackStock(prescriptionItems, clinicId);
       throw new Error("Gagal menyimpan data SOAP");
     }
+
+    // ============================================
+    // 🚀 SIMPAN DATA KECELAKAAN KERJA (JIKA ADA)
+    // ============================================
+    if (document.getElementById("soap-kk")?.checked) {
+      const patientName =
+        document.getElementById("soap-section")?.dataset?.patientName || "";
+      const kkData = {
+        registration_id: doctorCurrentRegistrationId,
+        clinic_id: clinicId,
+        nama: patientName,
+        lokasi: document.getElementById("kk-lokasi")?.value || "",
+        jenis_insiden: document.getElementById("kk-jenis-insiden")?.value || "",
+        kronologis: document.getElementById("kk-kronologis")?.value || "",
+        tgl_kejadian: new Date().toISOString().split("T")[0],
+        created_by: localCurrentUser.id,
+      };
+
+      const { error: kkError } = await supabaseClient
+        .from("kk_reports")
+        .upsert([kkData], { onConflict: "registration_id" });
+      if (kkError) console.warn("⚠️ Gagal simpan data KK:", kkError.message);
+      else console.log("✅ Data KK tersimpan");
+    }
+    // ============================================
 
     // Simpan Resep
     // Hapus resep lama jika ada
@@ -2351,6 +2372,50 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ==========================================
+// FORM KECELAKAAN KERJA
+// ==========================================
+window.toggleKKForm = function () {
+  const isChecked = document.getElementById("soap-kk").checked;
+  let kkContainer = document.getElementById("kk-form-container");
+
+  if (isChecked) {
+    if (!kkContainer) {
+      const soapSection = document.getElementById("soap-section");
+      kkContainer = document.createElement("div");
+      kkContainer.id = "kk-form-container";
+      kkContainer.className =
+        "mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-300 animate-fade-in";
+      kkContainer.innerHTML = `
+        <h4 class="font-bold text-orange-800 dark:text-orange-300 mb-3 flex items-center gap-2">⚠️ Form Kecelakaan Kerja</h4>
+        <div class="space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium mb-1">Lokasi Kejadian *</label>
+              <input type="text" id="kk-lokasi" placeholder="Contoh: Ruang IGD, Parkiran" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1">Jenis Insiden *</label>
+              <input type="text" id="kk-jenis-insiden" placeholder="Contoh: Tertusuk jarum, Terpeleset" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1">Kronologis Singkat *</label>
+            <textarea id="kk-kronologis" rows="3" placeholder="Ceritakan kronologis kejadian..." class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm"></textarea>
+          </div>
+          <p class="text-xs text-gray-400">💡 Form lengkap bisa dicetak dari menu Laporan Kecelakaan Kerja.</p>
+        </div>
+      `;
+      soapSection.parentNode.insertBefore(kkContainer, soapSection.nextSibling);
+    } else {
+      kkContainer.classList.remove("hidden");
+    }
+    kkContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else {
+    if (kkContainer) kkContainer.classList.add("hidden");
+  }
+};
+
+// ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
 function showLoading(container) {
@@ -2409,3 +2474,227 @@ function showMessage(element, type, message) {
 
 // Export untuk digunakan di modul lain
 export { diagnosisState, medicationState };
+
+// ==========================================
+// MODAL FORM KECELAKAAN KERJA LENGKAP
+// ==========================================
+window.toggleKKModal = function () {
+  const isChecked = document.getElementById("soap-kk").checked;
+
+  if (!isChecked) {
+    // Tutup modal kalau ada
+    const modal = document.getElementById("kk-modal");
+    if (modal) modal.remove();
+    return;
+  }
+
+  // Ambil data pasien
+  const patientName =
+    document.getElementById("soap-section")?.dataset?.patientName || "";
+
+  // Buat modal
+  const modal = document.createElement("div");
+  modal.id = "kk-modal";
+  modal.className =
+    "fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm";
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl overflow-y-auto">
+      <div class="p-5 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-red-800">⚠️ Form Kecelakaan Kerja</h3>
+        <button onclick="document.getElementById('kk-modal').remove(); document.getElementById('soap-kk').checked = false;" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+      </div>
+      
+      <form id="kk-form-full" class="p-6 space-y-4">
+        <!-- I. DATA UMUM -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200">
+          <h4 class="font-bold text-blue-800 mb-3">I. DATA UMUM</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">1. Nama *</label>
+              <input type="text" id="kk-nama" value="${patientName}" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">2. Tempat & Tgl Lahir</label>
+              <input type="text" id="kk-ttl" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm" placeholder="Kota, dd/mm/yyyy">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">3. Jenis Kelamin</label>
+              <div class="flex gap-4 mt-2">
+                <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="kk-gender" value="Laki-laki" class="w-4 h-4"> Laki-laki</label>
+                <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="kk-gender" value="Perempuan" class="w-4 h-4"> Perempuan</label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">4. Lama Kerja</label>
+              <input type="text" id="kk-lama-kerja" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm" placeholder="Contoh: 2 tahun">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">5. Unit Kerja / Bagian</label>
+              <input type="text" id="kk-unit-kerja" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">6. Status Korban</label>
+              <select id="kk-status-korban" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+                <option value="">-- Pilih --</option>
+                <option>Karyawan Tetap - Dokter</option><option>Karyawan Tetap - Perawat</option>
+                <option>Karyawan Kontrak - Dokter</option><option>Karyawan Kontrak - Perawat</option>
+                <option>Mahasiswa</option><option>PKL</option><option>Pasien</option>
+                <option>Pengunjung</option><option>Lain-lain</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">7. Pembiayaan</label>
+            <div class="flex gap-4 mt-2">
+              <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="kk-biaya" value="Asuransi" class="w-4 h-4"> Asuransi</label>
+              <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="kk-biaya" value="Pribadi" class="w-4 h-4"> Pribadi</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- II. RINCIAN KEJADIAN -->
+        <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200">
+          <h4 class="font-bold text-red-800 mb-3">II. RINCIAN KEJADIAN</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">1a. Tgl & Jam Lapor</label>
+              <div class="flex gap-2">
+                <input type="date" id="kk-tgl-lapor" class="flex-1 px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+                <input type="time" id="kk-jam-lapor" class="w-28 px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">1b. Tgl & Jam Kejadian</label>
+              <div class="flex gap-2">
+                <input type="date" id="kk-tgl-kejadian" class="flex-1 px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+                <input type="time" id="kk-jam-kejadian" class="w-28 px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">2. Lokasi Kejadian</label>
+            <input type="text" id="kk-lokasi" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm" placeholder="Contoh: Ruang IGD">
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">3. Jenis Insiden</label>
+            <input type="text" id="kk-jenis-insiden" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm" placeholder="Contoh: Tertusuk jarum">
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">4. Jenis Pekerjaan yang Menyebabkan</label>
+            <input type="text" id="kk-jenis-pekerjaan" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm" placeholder="Contoh: Menyuntik">
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">5. Kronologis</label>
+            <textarea id="kk-kronologis" rows="4" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm" placeholder="Ceritakan kronologis lengkap..."></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mt-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">6. Pelapor Pertama</label>
+              <select id="kk-pelapor" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+                <option value="">-- Pilih --</option>
+                <option>Karyawan</option><option>Pasien</option><option>Keluarga</option><option>Pengunjung</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">7. Akibat</label>
+              <select id="kk-akibat" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm">
+                <option value="">-- Pilih --</option>
+                <option>Tidak ada cedera</option><option>Cedera ringan</option><option>Cedera sedang</option><option>Cedera berat</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">8. Tindakan</label>
+            <textarea id="kk-tindakan" rows="2" class="w-full px-3 py-2 rounded-lg border dark:bg-gray-900 outline-none text-sm" placeholder="Pertolongan & hasil tindakan..."></textarea>
+          </div>
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">9. Sering terjadi?</label>
+            <div class="flex gap-4 mt-2">
+              <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="kk-sering" value="Ya" class="w-4 h-4"> Ya</label>
+              <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="kk-sering" value="Tidak" class="w-4 h-4"> Tidak</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOMBOL -->
+        <div class="flex gap-3 pt-4 border-t">
+          <button type="button" onclick="document.getElementById('kk-modal').remove(); document.getElementById('soap-kk').checked = false;" class="flex-1 px-4 py-2.5 bg-gray-200 rounded-lg font-medium">Batal</button>
+          <button type="submit" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-medium">💾 Simpan Data KK</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Set tanggal hari ini
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("kk-tgl-lapor").value = today;
+  document.getElementById("kk-tgl-kejadian").value = today;
+
+  // Submit form KK
+  document
+    .getElementById("kk-form-full")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await saveKKData();
+    });
+
+  // Tutup modal kalau klik luar
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.remove();
+      document.getElementById("soap-kk").checked = false;
+    }
+  };
+};
+
+async function saveKKData() {
+  try {
+    const kkData = {
+      registration_id: doctorCurrentRegistrationId,
+      clinic_id: (
+        await supabaseClient
+          .from("profiles")
+          .select("clinic_id")
+          .eq("id", localCurrentUser.id)
+          .single()
+      ).data?.clinic_id,
+      nama: document.getElementById("kk-nama").value,
+      ttl: document.getElementById("kk-ttl").value,
+      gender:
+        document.querySelector('input[name="kk-gender"]:checked')?.value || "",
+      lama_kerja: document.getElementById("kk-lama-kerja").value,
+      unit_kerja: document.getElementById("kk-unit-kerja").value,
+      status_korban: document.getElementById("kk-status-korban").value,
+      pembiayaan:
+        document.querySelector('input[name="kk-biaya"]:checked')?.value || "",
+      tgl_lapor: document.getElementById("kk-tgl-lapor").value,
+      jam_lapor: document.getElementById("kk-jam-lapor").value,
+      tgl_kejadian: document.getElementById("kk-tgl-kejadian").value,
+      jam_kejadian: document.getElementById("kk-jam-kejadian").value,
+      lokasi: document.getElementById("kk-lokasi").value,
+      jenis_insiden: document.getElementById("kk-jenis-insiden").value,
+      jenis_pekerjaan: document.getElementById("kk-jenis-pekerjaan").value,
+      kronologis: document.getElementById("kk-kronologis").value,
+      pelapor: document.getElementById("kk-pelapor").value,
+      akibat: document.getElementById("kk-akibat").value,
+      tindakan: document.getElementById("kk-tindakan").value,
+      sering_terjadi:
+        document.querySelector('input[name="kk-sering"]:checked')?.value || "",
+      created_by: localCurrentUser.id,
+    };
+
+    const { error } = await supabaseClient
+      .from("kk_reports")
+      .upsert([kkData], { onConflict: "registration_id" });
+    if (error) throw error;
+
+    window.showSuccess("Data Kecelakaan Kerja berhasil disimpan!");
+    document.getElementById("kk-modal").remove();
+  } catch (err) {
+    window.showError("Gagal: " + err.message);
+  }
+}

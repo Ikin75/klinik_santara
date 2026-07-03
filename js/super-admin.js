@@ -156,6 +156,19 @@ export function renderSuperAdminPage() {
           </div>
           </div>
 
+<!-- Paket Langganan -->
+<div class="bg-teal-50 dark:bg-teal-900/20 p-4 rounded-xl border border-teal-200 dark:border-teal-800">
+  <h4 class="font-semibold text-teal-800 dark:text-teal-300 mb-4">💎 Paket Langganan</h4>
+  <div>
+    <label class="block text-sm font-medium mb-1">Pilih Paket</label>
+    <select id="clinic-plan" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 outline-none">
+      <option value="free">🆓 FREE</option>
+      <option value="pro">🚀 PRO</option>
+    </select>
+    <p class="text-xs text-gray-400 mt-1">Fitur lengkap hanya di PRO</p>
+  </div>
+</div>
+
           <!-- Admin Account -->
           <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
             <h4 class="font-semibold text-green-800 dark:text-green-300 mb-4">Akun Admin Klinik</h4>
@@ -351,6 +364,8 @@ function setupClinicFormListeners() {
         const { data: updated, error: updateError } = await supabaseClient
           .from("clinics")
           .update({
+            // ... field lain,
+            plan: document.getElementById("clinic-plan").value,
             name: document.getElementById("clinic-name").value.trim(),
             type: document.getElementById("clinic-type").value,
             logo_url: logoUrl,
@@ -388,6 +403,8 @@ function setupClinicFormListeners() {
           .from("clinics")
           .insert([
             {
+              // ... field lain,
+              plan: document.getElementById("clinic-plan").value,
               name: document.getElementById("clinic-name").value.trim(),
               type: document.getElementById("clinic-type").value,
               logo_url: logoUrl,
@@ -479,6 +496,7 @@ function setupClinicFormListeners() {
 window.showAddClinicForm = function () {
   document.getElementById("modal-title").textContent = "🏢 Tambah Klinik Baru";
   document.getElementById("clinic-form").reset();
+  document.getElementById("clinic-plan").value = "free";
   document.getElementById("clinic-form").dataset.editId = "";
   document.getElementById("logo-preview").style.display = "none";
   document.getElementById("logo-placeholder").style.display = "flex";
@@ -516,6 +534,8 @@ window.editClinic = async function (clinicId) {
       clinic.satusehat_org_id || "";
     document.getElementById("clinic-satusehat-enabled").checked =
       clinic.satusehat_enabled || false;
+    // Isi paket
+    document.getElementById("clinic-plan").value = clinic.plan || "free";
     // Isi form dengan data klinik
     document.getElementById("modal-title").textContent = "✏️ Edit Klinik";
     document.getElementById("clinic-name").value = clinic.name || "";

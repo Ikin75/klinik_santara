@@ -20,6 +20,7 @@ const MENU_CONFIG = {
 
   // Menu berdasarkan role
   roleBased: [
+    // Menu yang selalu ada (FREE & PRO)
     {
       view: "registration",
       label: "Pendaftaran",
@@ -27,81 +28,83 @@ const MENU_CONFIG = {
       roles: ["admin", "owner", "receptionist"],
       activeViews: ["registration"],
       divider: false,
-    },
-    {
-      view: "dashboard-stats",
-      label: "Dashboard Statistik",
-      icon: "dashboard",
-      roles: ["admin", "owner"], // Hanya admin
-      activeViews: ["dashboard-stats"],
-      divider: false,
+      proOnly: false,
     },
     {
       view: "triage",
       label: "Antrian TTV (Perawat)",
       icon: "nurse",
-      roles: ["nurse", "admin", "owner"], // Perawat + Admin
+      roles: ["nurse", "admin", "owner"],
       activeViews: ["triage", "input-ttv"],
       condition: (settings) => settings.use_nurse_triage,
       divider: true,
+      proOnly: false,
     },
     {
       view: "doctor-queue",
       label: "Pemeriksaan Dokter (SOAP)",
       icon: "doctor",
-      roles: ["doctor", "admin", "owner"], // Dokter + Admin
+      roles: ["doctor", "admin", "owner"],
       activeViews: ["doctor-queue", "input-soap"],
       divider: true,
+      proOnly: false,
     },
+
+    // Menu PRO ONLY
     {
       view: "pharmacy",
       label: "Farmasi & Resep",
       icon: "pharmacy",
-      roles: ["pharmacist", "admin", "owner"], // Apoteker + Admin
+      roles: ["pharmacist", "admin", "owner"],
       activeViews: ["pharmacy", "process-prescription"],
       condition: (settings) => settings.has_internal_pharmacy,
       divider: true,
+      proOnly: true, // 🆕 HANYA PRO
     },
     {
       view: "medications",
       label: "Manajemen Obat",
       icon: "medications",
-      roles: ["pharmacist", "admin", "owner"], // Apoteker + Admin
-      activeViews: ["medications", "medication-stock"],
-      condition: (settings) => settings.has_internal_pharmacy,
+      roles: ["pharmacist", "admin", "owner"],
+      activeViews: ["medications"],
       divider: false,
+      proOnly: true, // 🆕 HANYA PRO
     },
     {
       view: "billing",
       label: "Kasir / Billing",
       icon: "billing",
-      roles: ["cashier", "admin", "owner"], // Kasir + Admin
+      roles: ["cashier", "admin", "owner"],
       activeViews: ["billing", "billing-detail"],
       divider: true,
+      proOnly: true, // 🆕 HANYA PRO
     },
     {
       view: "manage-users",
       label: "👥 Manajemen User",
       icon: "users",
-      roles: ["admin", "owner"], // Hanya admin
+      roles: ["admin", "owner"],
       activeViews: ["manage-users"],
       divider: true,
+      proOnly: true, // 🆕 HANYA PRO
+    },
+    {
+      view: "dashboard-stats",
+      label: "Dashboard Statistik",
+      icon: "dashboard",
+      roles: ["admin", "owner"],
+      activeViews: ["dashboard-stats"],
+      divider: false,
+      proOnly: true, // 🆕 HANYA PRO
     },
     {
       view: "master-corporate",
       label: "Master Corporate",
       icon: "corporate",
-      roles: ["admin", "owner"], // Hanya admin
+      roles: ["admin", "owner"],
       activeViews: ["master-corporate"],
       divider: true,
-    },
-    {
-      view: "super-admin",
-      label: "🏢 Manajemen Klinik",
-      icon: "super-admin",
-      roles: ["super_admin"],
-      activeViews: ["super-admin"],
-      divider: true,
+      proOnly: true, // 🆕 HANYA PRO
     },
   ],
 };
@@ -233,12 +236,19 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
   `);
 
   // Section: Menu Berdasarkan Role
+  // Di awal buildMenuHTML, ambil plan
+  const clinicPlan =
+    clinicSettings?.plan || localStorage.getItem("clinic_plan") || "free";
+
   const roleMenus = MENU_CONFIG.roleBased.filter((menu) => {
-    // ✅ Super admin bisa lihat SEMUA menu
+    // Super admin bisa lihat semua
     if (userRole === "super_admin") return true;
 
     // Check role permission
     if (!menu.roles.includes(userRole)) return false;
+
+    // 🆕 Check plan: free gak bisa akses menu PRO
+    if (menu.proOnly && clinicPlan === "free") return false;
 
     // Check conditional permission
     if (menu.condition && !menu.condition(clinicSettings)) return false;
@@ -282,14 +292,18 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
 
   // Tambahkan footer info
   // Di buildMenuHTML, cari bagian footer, ganti jadi:
+  // Di bagian footer
+  const plan = clinicSettings?.plan || "free";
+  const planBadge =
+    plan === "pro"
+      ? '<span class="text-xs bg-gradient-to-r from-primary to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">PRO</span>'
+      : '<span class="text-xs bg-gray-300 text-gray-600 px-2 py-0.5 rounded-full">FREE</span>';
+
   sections.push(`
   <div class="mt-6 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-    <div class="flex items-center gap-2 mb-2">
-      <img src="https://weqjbnkihgjxzquwltro.supabase.co/storage/v1/object/public/clinic-logos/logo.png" 
-           class="w-6 h-6 rounded object-cover" 
-           alt="KlinikHub"
-           onerror="this.style.display='none'">
-      <span class="text-xs text-gray-400">Powered by <strong>KlinikHub</strong></span>
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs text-gray-400">Paket</span>
+      ${planBadge}
     </div>
     <div class="flex items-center gap-2 text-xs text-gray-400">
       <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>

@@ -63,6 +63,12 @@ export class SatusehatBridge {
   }
 
   async getToken() {
+    // 🔍 Cek plan (di dalam fungsi)
+    const plan = localStorage.getItem("clinic_plan") || "free";
+    if (plan === "free") {
+      console.log("ℹ️ SATUSEHAT hanya tersedia di paket PRO");
+      throw new Error("SATUSEHAT memerlukan paket PRO");
+    }
     try {
       if (!this.clientId) await this.loadCredentials();
 

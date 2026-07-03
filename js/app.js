@@ -34,7 +34,7 @@ let currentView = "registration";
 // ... (biarkan variabel global lainnya di sini) ...
 
 // 3. Fungsi Navigasi (Router)
-window.navigateTo = function (view, data = null) {
+window.navigateTo = async function (view, data = null) {
   // ============================================
   // 🛡️ VALIDASI AKSES ROLE
   // ============================================
@@ -52,7 +52,7 @@ window.navigateTo = function (view, data = null) {
   const allowedViews = accessMap[userRole];
 
   if (allowedViews !== "all" && !allowedViews.includes(view)) {
-    alert(
+    window.showWarning(
       `⛔ Akses terbatas! Role ${userRole} tidak bisa mengakses halaman ini.`,
     );
     // Redirect ke halaman pertama yang diizinkan
@@ -88,7 +88,11 @@ window.navigateTo = function (view, data = null) {
     loadDoctorQueue(currentUser); // Panggil dari dokter.js
   } else if (view === "input-soap") {
     pageTitle.textContent = "Pemeriksaan & SOAP";
-    loadSOAPData(data.id, currentUser); // Panggil dari dokter.js
+    loadSOAPData(data.id, currentUser);
+  } else if (view === "kk-form") {
+    pageTitle.textContent = "⚠️ Form Kecelakaan Kerja";
+    const { renderKKForm } = await import("./kecelakaan-kerja.js");
+    renderKKForm(data);
   } else if (view === "pharmacy") {
     pageTitle.textContent = "Dashboard Farmasi";
     loadPharmacyQueue(currentUser);
@@ -166,7 +170,7 @@ async function loadUserData() {
       .single();
 
     if (error || !profile) {
-      alert("Akun tidak memiliki profil klinik.");
+      window.showWarning("Akun tidak memiliki profil klinik.");
       await handleLogout();
       showLogin();
       return;
@@ -198,6 +202,14 @@ async function loadUserData() {
       has_internal_pharmacy: true,
     };
 
+    // ✅ Gabungkan plan ke clinicSettings
+    const plan = profile.clinics?.plan || clinicSettings?.plan || "free";
+    clinicSettings.plan = plan; // <-- GABUNGKAN
+
+    // Simpan ke localStorage & window
+    localStorage.setItem("clinic_plan", plan);
+    window.currentPlan = plan;
+
     // 5. Set global variables
     userRole = profile.role;
     window.userRole = userRole;
@@ -220,7 +232,7 @@ async function loadUserData() {
       console.warn("⚠️ Gagal load theme:", themeError.message);
     }
   } catch (err) {
-    alert("Error: " + err.message);
+    window.showWarning("Error: " + err.message);
     await handleLogout();
     showLogin();
   }
@@ -286,7 +298,9 @@ window.handlePrintClick = async function () {
   if (window.loadPrintDataAndOpenModal) {
     await window.loadPrintDataAndOpenModal(regId);
   } else {
-    alert("Sistem cetak belum siap atau file cetak.js belum dimuat.");
+    window.showWarning(
+      "Sistem cetak belum siap atau file cetak.js belum dimuat.",
+    );
   }
 };
 
@@ -307,13 +321,6 @@ document.getElementById("btn-logout").addEventListener("click", async () => {
     // Force logout anyway
     localStorage.clear();
     window.location.reload();
-  }
-});
-
-// LOGOUT
-document.getElementById("btn-logout").addEventListener("click", async () => {
-  if (confirm("Yakin keluar?")) {
-    await handleLogout();
   }
 });
 
