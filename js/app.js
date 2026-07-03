@@ -348,4 +348,61 @@ window.closeMobileSidebar = function () {
   }, 300);
 };
 
+// Tangani klik tombol daftar
+document.getElementById("show-register-btn").addEventListener("click", () => {
+  document.getElementById("register-section").classList.remove("hidden");
+  document.getElementById("show-register-btn").classList.add("hidden");
+  document.getElementById("login-form").classList.add("hidden");
+});
+
+// Proses pendaftaran
+document
+  .getElementById("register-form")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector("button");
+    btn.disabled = true;
+    btn.textContent = "Mendaftarkan...";
+
+    try {
+      const clinicName = document.getElementById("reg-clinic-name").value;
+      const email = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+
+      // 1. Buat user di Auth
+      const { data: authData, error: authError } =
+        await supabaseClient.auth.signUp({ email, password });
+      if (authError) throw authError;
+
+      // 2. Buat Klinik (PAKET FREE)
+      const { data: clinic, error: clinicError } = await supabaseClient
+        .from("clinics")
+        .insert([{ name: clinicName, type: "clinic", plan: "free" }])
+        .select()
+        .single();
+      if (clinicError) throw clinicError;
+
+      // 3. Buat Profile Admin
+      await supabaseClient.from("profiles").insert([
+        {
+          id: authData.user.id,
+          clinic_id: clinic.id,
+          role: "admin",
+          full_name: "Admin " + clinicName,
+        },
+      ]);
+
+      // 4. Auto Login
+      window.showSuccess("Klinik berhasil terdaftar! Silakan login.");
+      document.getElementById("register-section").classList.add("hidden");
+      document.getElementById("login-form").classList.remove("hidden");
+      document.getElementById("login-email").value = email;
+    } catch (err) {
+      window.showError("Gagal mendaftar: " + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "🎉 Daftar Gratis";
+    }
+  });
+
 checkAuth();
