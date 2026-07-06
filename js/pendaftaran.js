@@ -101,7 +101,10 @@ export function getRegistrationHTML() {
       <option value="">-- Pilih Perusahaan --</option>
     </select>
     <!-- Untuk FREE: input teks (sembunyi dulu) -->
-<input type="text" id="reg-company-free" class="w-full px-4 py-2.5 rounded-lg border border-blue-200 dark:bg-gray-900 outline-none hidden" placeholder="Nama PT / Perusahaan">
+<input type="text" id="reg-company-free" class="... hidden" placeholder="Nama PT / Perusahaan">
+<p id="hint-company-free" class="hidden text-xs text-primary/70 mt-1">
+  💡 <em>Upgrade ke <strong>PRO</strong> untuk mengelola daftar perusahaan & vendor secara terpusat.</em>
+</p>
   </div>
   
   <div id="div-department" class="hidden">
@@ -272,6 +275,8 @@ export function initRegistration(currentUser, clinicSettings) {
   const plan =
     clinicSettings?.plan || localStorage.getItem("clinic_plan") || "free";
   if (plan === "free") {
+    document.getElementById("reg-company-free").classList.remove("hidden");
+    document.getElementById("hint-company-free").classList.remove("hidden");
     document.getElementById("reg-company").classList.add("hidden");
     document.getElementById("reg-company-free").classList.remove("hidden");
     document.getElementById("reg-department").classList.add("hidden");

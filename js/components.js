@@ -106,6 +106,23 @@ const MENU_CONFIG = {
       divider: true,
       proOnly: true, // 🆕 HANYA PRO
     },
+    {
+      view: "pricing",
+      label: "💰 Upgrade ke PRO",
+      icon: "billing", // atau icon khusus
+      roles: [
+        "admin",
+        "owner",
+        "doctor",
+        "nurse",
+        "pharmacist",
+        "cashier",
+        "receptionist",
+      ],
+      activeViews: ["pricing"],
+      divider: true,
+      proOnly: false, // semua bisa lihat
+    },
   ],
 };
 
