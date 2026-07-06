@@ -96,7 +96,10 @@ export function getRegistrationHTML() {
   
   <div id="div-company" class="hidden">
     <label class="block text-sm font-medium mb-1 text-blue-800 dark:text-blue-300">Nama PT / Perusahaan *</label>
+    <!-- Untuk PRO: dropdown -->
     <select id="reg-company" class="w-full p-2.5 border border-blue-200 rounded-lg dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary">
+    <!-- Untuk FREE: input teks (sembunyi dulu) -->
+<input type="text" id="reg-company-free" class="w-full px-4 py-2.5 rounded-lg border hidden" placeholder="Nama PT / Perusahaan">
       <option value="">-- Pilih Perusahaan --</option>
     </select>
   </div>
@@ -104,6 +107,7 @@ export function getRegistrationHTML() {
   <div id="div-department" class="hidden">
     <label class="block text-sm font-medium mb-1 text-blue-800 dark:text-blue-300">Departemen / Bagian</label>
     <select id="reg-department" class="w-full p-2.5 border border-blue-200 rounded-lg dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary">
+    <input type="text" id="reg-department-free" class="w-full px-4 py-2.5 rounded-lg border hidden" placeholder="Departemen / Bagian">
       <option value="">-- Pilih Departemen --</option>
     </select>
   </div>
@@ -263,6 +267,17 @@ export function initRegistration(currentUser, clinicSettings) {
 
   // Jalankan fungsinya langsung
   loadCorporateDropdownOptions();
+
+  // Cek paket pengguna
+  const plan = clinicSettings?.plan || "free";
+
+  if (plan === "free") {
+    // Sembunyikan dropdown, tampilkan input teks
+    document.getElementById("reg-company").classList.add("hidden");
+    document.getElementById("reg-company-free").classList.remove("hidden");
+    document.getElementById("reg-department").classList.add("hidden");
+    document.getElementById("reg-department-free").classList.remove("hidden");
+  }
 
   // ... (sisa kode fungsi initRegistration Anda yang lama seperti window.switchRegTab, dll) ...
 
@@ -509,6 +524,7 @@ export function initRegistration(currentUser, clinicSettings) {
   }
 
   function attachNewPatientFormListeners() {
+    const plan = clinicSettings?.plan || "free";
     const form = document.getElementById("new-patient-form");
     if (!form) return;
 
@@ -548,10 +564,19 @@ export function initRegistration(currentUser, clinicSettings) {
 
               // 🛠️ TAMBAHAN FASE 1: Simpan Kategori Corporate ke Database
               category: document.getElementById("reg-category").value,
+
+              // Ambil nilai dari input teks jika paket FREE, jika tidak dari dropdown
               company_name:
-                document.getElementById("reg-company").value.trim() || null,
+                (plan === "free"
+                  ? document.getElementById("reg-company-free").value.trim()
+                  : document.getElementById("reg-company").value.trim()) ||
+                null,
+
               department:
-                document.getElementById("reg-department").value.trim() || null,
+                (plan === "free"
+                  ? document.getElementById("reg-department-free").value.trim()
+                  : document.getElementById("reg-department").value.trim()) ||
+                null,
             },
           ])
           .select()

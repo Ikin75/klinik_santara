@@ -221,6 +221,10 @@ export function renderSidebar(
 function buildMenuHTML(currentView, userRole, clinicSettings) {
   const sections = [];
 
+  // ✅ Ambil plan SEKALI di atas
+  const clinicPlan =
+    clinicSettings?.plan || localStorage.getItem("clinic_plan") || "free";
+
   // Section: Menu Utama (selalu tampil)
   sections.push(`
     <div class="mb-4">
@@ -228,61 +232,61 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
         Menu Utama
       </h3>
       ${MENU_CONFIG.permanent
-        .map((menu) =>
-          buildMenuItem(menu, currentView, userRole, clinicSettings),
+        .map(
+          (menu) =>
+            buildMenuItem(
+              menu,
+              currentView,
+              userRole,
+              clinicSettings,
+              clinicPlan,
+            ), // ✅ kirim clinicPlan
         )
         .join("")}
     </div>
   `);
 
   // Section: Menu Berdasarkan Role
-  // Di awal buildMenuHTML, ambil plan
-  const clinicPlan =
-    clinicSettings?.plan || localStorage.getItem("clinic_plan") || "free";
-
   const roleMenus = MENU_CONFIG.roleBased.filter((menu) => {
-    // Super admin bisa lihat semua
     if (userRole === "super_admin") return true;
-
-    // Check role permission
     if (!menu.roles.includes(userRole)) return false;
 
-    // 🆕 Check plan: free gak bisa akses menu PRO
+    // 🆕 Filter menu PRO only jika paket FREE
     if (menu.proOnly && clinicPlan === "free") return false;
 
-    // Check conditional permission
     if (menu.condition && !menu.condition(clinicSettings)) return false;
-
     return true;
   });
 
   if (roleMenus.length > 0) {
-    // Group menus dengan divider
     let currentGroup = [];
     const groups = [];
 
     roleMenus.forEach((menu, index) => {
       currentGroup.push(menu);
-
-      // Split group jika ada divider atau item terakhir
       if (menu.divider || index === roleMenus.length - 1) {
         groups.push([...currentGroup]);
         currentGroup = [];
       }
     });
 
-    // Render groups
     groups.forEach((group, groupIndex) => {
       const sectionTitle = getSectionTitle(group[0].view);
-
       sections.push(`
         <div class="mb-4">
           <h3 class="px-4 mb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
             ${sectionTitle}
           </h3>
           ${group
-            .map((menu) =>
-              buildMenuItem(menu, currentView, userRole, clinicSettings),
+            .map(
+              (menu) =>
+                buildMenuItem(
+                  menu,
+                  currentView,
+                  userRole,
+                  clinicSettings,
+                  clinicPlan,
+                ), // ✅ kirim clinicPlan
             )
             .join("")}
         </div>
@@ -290,27 +294,24 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
     });
   }
 
-  // Tambahkan footer info
-  // Di buildMenuHTML, cari bagian footer, ganti jadi:
-  // Di bagian footer
-  const plan = clinicSettings?.plan || "free";
+  // ✅ Footer (pakai clinicPlan yang sama)
   const planBadge =
-    plan === "pro"
+    clinicPlan === "pro"
       ? '<span class="text-xs bg-gradient-to-r from-primary to-orange-500 text-white px-2 py-0.5 rounded-full font-bold">PRO</span>'
       : '<span class="text-xs bg-gray-300 text-gray-600 px-2 py-0.5 rounded-full">FREE</span>';
 
   sections.push(`
-  <div class="mt-6 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-xs text-gray-400">Paket</span>
-      ${planBadge}
+    <div class="mt-6 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs text-gray-400">Paket</span>
+        ${planBadge}
+      </div>
+      <div class="flex items-center gap-2 text-xs text-gray-400">
+        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <span>v1.0.0</span>
+      </div>
     </div>
-    <div class="flex items-center gap-2 text-xs text-gray-400">
-      <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-      <span>v1.0.0</span>
-    </div>
-  </div>
-`);
+  `);
 
   return sections.join("");
 }
@@ -319,34 +320,40 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
  * Build HTML untuk satu item menu
  * @private
  */
-function buildMenuItem(menu, currentView, userRole, clinicSettings) {
+function buildMenuItem(
+  menu,
+  currentView,
+  userRole,
+  clinicSettings,
+  clinicPlan = "free",
+) {
   const isActive = menu.activeViews.includes(currentView);
   const stateClass = isActive ? BUTTON_CLASSES.active : BUTTON_CLASSES.inactive;
   const icon = ICONS[menu.icon] || ICONS.registration;
 
-  // Tambahkan ARIA attributes untuk accessibility
+  // 🆕 Cek apakah menu ini PRO only & user pakai FREE
+  const isProOnly = menu.proOnly && clinicPlan === "free";
+  const disabledAttr = isProOnly ? "disabled" : "";
+  const disabledClass = isProOnly
+    ? "opacity-50 cursor-not-allowed"
+    : "cursor-pointer";
+  const onClick = isProOnly
+    ? "" // tidak bisa diklik
+    : `window.navigateTo('${menu.view}')`;
+
   return `
     <button 
       data-view="${menu.view}" 
-      class="${BUTTON_CLASSES.base} ${stateClass}"
+      class="${BUTTON_CLASSES.base} ${stateClass} ${disabledClass}"
       role="menuitem"
-      aria-current="${isActive ? "page" : "false"}"
-      aria-label="${menu.label}"
-      ${isActive ? 'aria-selected="true"' : ""}
+      ${disabledAttr}
+      onclick="${onClick}"
+      title="${isProOnly ? "Fitur ini hanya tersedia di paket PRO" : menu.label}"
     >
       <span class="flex-shrink-0">${icon}</span>
       <span class="flex-1 text-left">${menu.label}</span>
-      ${
-        isActive
-          ? `
-        <span class="flex-shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </span>
-      `
-          : ""
-      }
+      ${isProOnly ? '<span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full ml-2 font-bold">PRO</span>' : ""}
+      ${isActive ? `<span class="flex-shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>` : ""}
     </button>
   `;
 }
