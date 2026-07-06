@@ -335,7 +335,7 @@ function buildMenuItem(
   const isProOnly = menu.proOnly && clinicPlan === "free";
   const disabledAttr = isProOnly ? "disabled" : "";
   const disabledClass = isProOnly
-    ? "opacity-50 cursor-not-allowed"
+    ? "opacity-50 pointer-events-none" // ← pointer-events-none
     : "cursor-pointer";
   const onClick = isProOnly
     ? "" // tidak bisa diklik
@@ -387,6 +387,7 @@ function attachMenuEvents(menu) {
 
       const view = btn.dataset.view;
 
+      if (btn.disabled) return;
       // Prevent double navigation
       if (btn.classList.contains("navigating")) return;
 
