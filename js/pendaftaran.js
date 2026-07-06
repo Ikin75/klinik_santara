@@ -98,18 +98,18 @@ export function getRegistrationHTML() {
     <label class="block text-sm font-medium mb-1 text-blue-800 dark:text-blue-300">Nama PT / Perusahaan *</label>
     <!-- Untuk PRO: dropdown -->
     <select id="reg-company" class="w-full p-2.5 border border-blue-200 rounded-lg dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary">
-    <!-- Untuk FREE: input teks (sembunyi dulu) -->
-<input type="text" id="reg-company-free" class="w-full px-4 py-2.5 rounded-lg border border-blue-200 dark:bg-gray-900 outline-none hidden" placeholder="Nama PT / Perusahaan">
       <option value="">-- Pilih Perusahaan --</option>
     </select>
+    <!-- Untuk FREE: input teks (sembunyi dulu) -->
+<input type="text" id="reg-company-free" class="w-full px-4 py-2.5 rounded-lg border border-blue-200 dark:bg-gray-900 outline-none hidden" placeholder="Nama PT / Perusahaan">
   </div>
   
   <div id="div-department" class="hidden">
     <label class="block text-sm font-medium mb-1 text-blue-800 dark:text-blue-300">Departemen / Bagian</label>
     <select id="reg-department" class="w-full p-2.5 border border-blue-200 rounded-lg dark:bg-gray-900 outline-none focus:ring-2 focus:ring-primary">
-    <input type="text" id="reg-department-free" class="w-full px-4 py-2.5 rounded-lg border border-blue-200 dark:bg-gray-900 outline-none hidden" placeholder="Departemen / Bagian">
       <option value="">-- Pilih Departemen --</option>
     </select>
+    <input type="text" id="reg-department-free" class="w-full px-4 py-2.5 rounded-lg border border-blue-200 dark:bg-gray-900 outline-none hidden" placeholder="Departemen / Bagian">
   </div>
 </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
