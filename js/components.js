@@ -386,6 +386,7 @@ function getSectionTitle(view) {
     "master-corporate": "Administrasi",
     "dashboard-stats": "Manajemen",
     "super-admin": "Super Admin",
+    pricing: "Akun",
   };
   return titles[view] || "Lainnya";
 }
