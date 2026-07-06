@@ -251,9 +251,6 @@ function buildMenuHTML(currentView, userRole, clinicSettings) {
     if (userRole === "super_admin") return true;
     if (!menu.roles.includes(userRole)) return false;
 
-    // 🆕 Filter menu PRO only jika paket FREE
-    if (menu.proOnly && clinicPlan === "free") return false;
-
     if (menu.condition && !menu.condition(clinicSettings)) return false;
     return true;
   });
