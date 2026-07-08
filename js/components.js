@@ -98,6 +98,15 @@ const MENU_CONFIG = {
       proOnly: true, // 🆕 HANYA PRO
     },
     {
+      view: "report",
+      label: "📊 Laporan",
+      icon: "dashboard",
+      roles: ["admin", "owner", "doctor"],
+      activeViews: ["report"],
+      divider: true,
+      proOnly: false, // semua bisa lihat, tapi export Word PRO only
+    },
+    {
       view: "master-corporate",
       label: "Master Corporate",
       icon: "corporate",

@@ -114,6 +114,10 @@ window.navigateTo = async function (view, data = null) {
   } else if (view === "master-corporate") {
     pageTitle.textContent = "Master Corporate";
     loadMasterCorporate(currentUser);
+  } else if (view === "report") {
+    pageTitle.textContent = "📊 Laporan";
+    const { renderReportPage } = await import("./report.js");
+    await renderReportPage(currentUser, clinicSettings);
   } else if (view === "pricing") {
     pageTitle.textContent = "💰 Upgrade Paket";
     const { renderPricingPage } = await import("./pricing.js");
