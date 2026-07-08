@@ -64,6 +64,77 @@ export function getRegistrationHTML() {
           </button>
           <p id="visit-message" class="text-sm hidden mt-2"></p>
         </div>
+        <!-- Modal Edit Pasien -->
+<div id="edit-patient-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold">✏️ Edit Data Pasien</h3>
+      <button onclick="window.closeEditPatientModal()" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+    </div>
+    <form id="edit-patient-form" class="space-y-4">
+      <input type="hidden" id="edit-patient-id">
+      <div>
+        <label class="block text-sm font-medium mb-1">Gelar</label>
+        <select id="edit-title" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none">
+          <option value="">-- Pilih --</option>
+          <option value="Tn.">Tn.</option>
+          <option value="Ny.">Ny.</option>
+          <option value="Sdr.">Sdr.</option>
+          <option value="Sdri.">Sdri.</option>
+          <option value="An.">An.</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Nama Lengkap *</label>
+        <input type="text" id="edit-name" required class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">NIK</label>
+        <input type="text" id="edit-nik" maxlength="16" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Tanggal Lahir</label>
+        <input type="date" id="edit-dob" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Jenis Kelamin</label>
+        <select id="edit-gender" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none">
+          <option value="">-- Pilih --</option>
+          <option value="L">Laki-laki</option>
+          <option value="P">Perempuan</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">No. Handphone</label>
+        <input type="tel" id="edit-phone" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Alamat</label>
+        <textarea id="edit-address" rows="2" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Kategori</label>
+        <select id="edit-category" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none">
+          <option value="Umum">Umum / Pribadi</option>
+          <option value="Karyawan">Karyawan Perusahaan</option>
+          <option value="Vendor">Vendor / Rekanan</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Nama PT / Perusahaan</label>
+        <input type="text" id="edit-company" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none" placeholder="Nama PT">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Departemen</label>
+        <input type="text" id="edit-department" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-900 outline-none" placeholder="Departemen">
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="window.closeEditPatientModal()" class="flex-1 px-4 py-2.5 bg-gray-200 rounded-lg font-medium">Batal</button>
+        <button type="submit" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg font-medium">💾 Simpan Perubahan</button>
+      </div>
+    </form>
+  </div>
+</div>
       </div>
 
       <!-- TAB 2: DAFTAR PASIEN BARU -->
@@ -433,19 +504,21 @@ export function initRegistration(currentUser, clinicSettings) {
           resultsDiv.innerHTML = patients
             .map(
               (p) => `
-            <div class="patient-card p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary cursor-pointer transition" 
-                 data-id="${p.id}" 
-                 data-name="${(p.full_name || "").replace(/"/g, "&quot;")}" 
-                 data-nik="${(p.nik || "").replace(/"/g, "&quot;")}" 
-                 data-dob="${p.date_of_birth || ""}" 
-                 data-phone="${(p.phone || "").replace(/"/g, "&quot;")}"
-                 data-title="${(p.title || "").replace(/"/g, "&quot;")}">
-              <div class="flex justify-between items-start mb-2">
-                <h4 class="font-bold text-gray-900 dark:text-gray-100">${p.title ? p.title + " " : ""}${p.full_name}</h4>
-                <span class="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded">${p.gender === "L" ? "♂ Laki-laki" : p.gender === "P" ? "♀ Perempuan" : "-"}</span>
-              </div>
-            </div>
-          `,
+  <div class="patient-card p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary cursor-pointer transition flex justify-between items-start" 
+       data-id="${p.id}" 
+       data-name="${(p.full_name || "").replace(/"/g, "&quot;")}" 
+       data-nik="${(p.nik || "").replace(/"/g, "&quot;")}" 
+       data-dob="${p.date_of_birth || ""}" 
+       data-phone="${(p.phone || "").replace(/"/g, "&quot;")}"
+       data-title="${(p.title || "").replace(/"/g, "&quot;")}">
+    <div class="flex-1">
+      <h4 class="font-bold text-gray-900 dark:text-gray-100">${p.title ? p.title + " " : ""}${p.full_name}</h4>
+      <p class="text-xs text-gray-500">NIK: ${p.nik || "-"}</p>
+      <span class="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded">${p.gender === "L" ? "♂ Laki-laki" : p.gender === "P" ? "♀ Perempuan" : "-"}</span>
+    </div>
+    <button onclick="event.stopPropagation(); window.editPatient('${p.id}')" class="ml-3 text-xs text-blue-600 hover:underline whitespace-nowrap">✏️ Edit</button>
+  </div>
+`,
             )
             .join("");
         } catch (err) {
@@ -734,119 +807,83 @@ export function initRegistration(currentUser, clinicSettings) {
     }); // ← TUTUP form.addEventListener
   } // ← TUTUP fungsi attachNewPatientFormListeners
 
+  // Buka modal edit
   window.editPatient = async function (patientId) {
-    // Ambil data pasien dari database
-    const { data: patient, error } = await supabaseClient
-      .from("patients")
-      .select("*")
-      .eq("id", patientId)
-      .single();
-    if (error) return window.showError("Gagal memuat data pasien");
+    try {
+      const { data: patient, error } = await supabaseClient
+        .from("patients")
+        .select("*")
+        .eq("id", patientId)
+        .single();
+      if (error) throw error;
 
-    // Buat modal edit
-    const modal = document.createElement("div");
-    modal.className =
-      "fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm";
-    modal.innerHTML = `
-    <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl p-6">
-      <h3 class="text-lg font-bold mb-4">Edit Data Pasien</h3>
-      <form id="edit-patient-form" class="space-y-3">
-        <div class="flex gap-2">
-          <div style="width: 80px;">
-            <label class="block text-xs mb-1">Titel</label>
-            <select id="edit-title" class="w-full px-2 py-2 rounded border dark:bg-gray-900 text-sm">
-              <option value="">-</option>
-              <option value="Tn." ${patient.title === "Tn." ? "selected" : ""}>Tn.</option>
-              <option value="Ny." ${patient.title === "Ny." ? "selected" : ""}>Ny.</option>
-              <option value="Sdr." ${patient.title === "Sdr." ? "selected" : ""}>Sdr.</option>
-              <option value="Sdri." ${patient.title === "Sdri." ? "selected" : ""}>Sdri.</option>
-              <option value="An." ${patient.title === "An." ? "selected" : ""}>An.</option>
-            </select>
-          </div>
-          <div class="flex-1">
-            <label class="block text-xs mb-1">Nama Lengkap</label>
-            <input type="text" id="edit-name" value="${patient.full_name || ""}" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs mb-1">NIK</label>
-          <input type="text" id="edit-nik" value="${patient.nik || ""}" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs mb-1">Tanggal Lahir</label>
-          <input type="date" id="edit-dob" value="${patient.date_of_birth || ""}" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs mb-1">Jenis Kelamin</label>
-          <select id="edit-gender" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">
-            <option value="L" ${patient.gender === "L" ? "selected" : ""}>Laki-laki</option>
-            <option value="P" ${patient.gender === "P" ? "selected" : ""}>Perempuan</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs mb-1">Alamat</label>
-          <textarea id="edit-address" rows="2" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">${patient.address || ""}</textarea>
-        </div>
-        <div>
-          <label class="block text-xs mb-1">No. HP</label>
-          <input type="text" id="edit-phone" value="${patient.phone || ""}" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs mb-1">Kategori</label>
-          <select id="edit-category" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">
-            <option value="Umum" ${patient.category === "Umum" ? "selected" : ""}>Umum</option>
-            <option value="Karyawan" ${patient.category === "Karyawan" ? "selected" : ""}>Karyawan</option>
-            <option value="Vendor" ${patient.category === "Vendor" ? "selected" : ""}>Vendor</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs mb-1">Perusahaan</label>
-          <input type="text" id="edit-company" value="${patient.company_name || ""}" class="w-full px-3 py-2 rounded border dark:bg-gray-900 text-sm">
-        </div>
-        <div class="flex gap-3 pt-4">
-          <button type="button" id="btn-cancel-edit" class="flex-1 px-4 py-2 border rounded-lg">Batal</button>
-          <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium">Simpan</button>
-        </div>
-      </form>
-    </div>
-  `;
-    document.body.appendChild(modal);
+      // Isi form
+      document.getElementById("edit-patient-id").value = patient.id;
+      document.getElementById("edit-title").value = patient.title || "";
+      document.getElementById("edit-name").value = patient.full_name || "";
+      document.getElementById("edit-nik").value = patient.nik || "";
+      document.getElementById("edit-dob").value = patient.date_of_birth || "";
+      document.getElementById("edit-gender").value = patient.gender || "";
+      document.getElementById("edit-phone").value = patient.phone || "";
+      document.getElementById("edit-address").value = patient.address || "";
+      document.getElementById("edit-category").value =
+        patient.category || "Umum";
+      document.getElementById("edit-company").value =
+        patient.company_name || "";
+      document.getElementById("edit-department").value =
+        patient.department || "";
 
-    // Batal
-    document.getElementById("btn-cancel-edit").onclick = () => modal.remove();
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.remove();
-    };
+      document.getElementById("edit-patient-modal").classList.remove("hidden");
+    } catch (err) {
+      window.showError("Gagal memuat data pasien: " + err.message);
+    }
+  };
 
-    // Submit edit
-    document
-      .getElementById("edit-patient-form")
-      .addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const data = {
-          title: document.getElementById("edit-title").value,
-          full_name: document.getElementById("edit-name").value.trim(),
-          nik: document.getElementById("edit-nik").value.trim(),
-          date_of_birth: document.getElementById("edit-dob").value,
-          gender: document.getElementById("edit-gender").value,
-          address: document.getElementById("edit-address").value.trim(),
-          phone: document.getElementById("edit-phone").value.trim(),
-          category: document.getElementById("edit-category").value,
-          company_name: document.getElementById("edit-company").value.trim(),
-        };
+  // Tutup modal
+  window.closeEditPatientModal = function () {
+    document.getElementById("edit-patient-modal").classList.add("hidden");
+  };
+
+  // Simpan edit
+  document
+    .getElementById("edit-patient-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("edit-patient-id").value;
+      const data = {
+        title: document.getElementById("edit-title").value,
+        full_name: document.getElementById("edit-name").value.trim(),
+        nik: document.getElementById("edit-nik").value.trim() || null,
+        date_of_birth: document.getElementById("edit-dob").value || null,
+        gender: document.getElementById("edit-gender").value,
+        phone: document.getElementById("edit-phone").value.trim() || null,
+        address: document.getElementById("edit-address").value.trim() || null,
+        category: document.getElementById("edit-category").value,
+        company_name:
+          document.getElementById("edit-company").value.trim() || null,
+        department:
+          document.getElementById("edit-department").value.trim() || null,
+      };
+
+      try {
         const { error } = await supabaseClient
           .from("patients")
           .update(data)
-          .eq("id", patientId);
-        if (error) {
-          window.showError("Gagal menyimpan: " + error.message);
-        } else {
-          window.showSuccess("Data pasien berhasil diperbarui!");
-          modal.remove();
-          // Refresh hasil pencarian jika diperlukan
+          .eq("id", id);
+        if (error) throw error;
+
+        window.showSuccess("Data pasien berhasil diperbarui!");
+        window.closeEditPatientModal();
+
+        // Refresh hasil pencarian jika ada
+        const input = document.getElementById("search-patient-input");
+        if (input.value.trim().length >= 2) {
+          input.dispatchEvent(new Event("input"));
         }
-      });
-  };
+      } catch (err) {
+        window.showError("Gagal memperbarui: " + err.message);
+      }
+    });
   // ============================================
   // INI HARUS DI LUAR! (Di dalam initRegistration)
   // ============================================
