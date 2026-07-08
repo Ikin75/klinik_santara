@@ -438,7 +438,8 @@ export function initRegistration(currentUser, clinicSettings) {
                  data-name="${(p.full_name || "").replace(/"/g, "&quot;")}" 
                  data-nik="${(p.nik || "").replace(/"/g, "&quot;")}" 
                  data-dob="${p.date_of_birth || ""}" 
-                 data-phone="${(p.phone || "").replace(/"/g, "&quot;")}">
+                 data-phone="${(p.phone || "").replace(/"/g, "&quot;")}"
+                 data-title="${(p.title || "").replace(/"/g, "&quot;")}">
               <div class="flex justify-between items-start mb-2">
                 <h4 class="font-bold text-gray-900 dark:text-gray-100">${p.title ? p.title + " " : ""}${p.full_name}</h4>
                 <span class="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded">${p.gender === "L" ? "♂ Laki-laki" : p.gender === "P" ? "♀ Perempuan" : "-"}</span>
