@@ -91,10 +91,6 @@ export function getRegistrationHTML() {
 </div>
 
 <!-- Nama Lengkap (yang sudah ada) -->
-<div>
-  <label class="block text-sm font-medium mb-1">Nama Lengkap *</label>
-  <input type="text" id="new-name" required ...>
-</div>
   <div class="flex-1">
     <label class="block text-sm font-medium mb-1">Nama Lengkap *</label>
     <input type="text" id="new-name" required class="w-full px-4 py-2 rounded-lg border ...">
