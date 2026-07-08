@@ -65,8 +65,8 @@ export function getRegistrationHTML() {
           <p id="visit-message" class="text-sm hidden mt-2"></p>
         </div>
         <!-- Modal Edit Pasien -->
-<div id="edit-patient-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-  <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl p-6">
+<div id="edit-patient-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div class="bg-white dark:bg-gray-800 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl p-6">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-xl font-bold">✏️ Edit Data Pasien</h3>
       <button onclick="window.closeEditPatientModal()" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
